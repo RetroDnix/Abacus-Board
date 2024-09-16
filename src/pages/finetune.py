@@ -39,7 +39,8 @@ def finetune_page():
             "plot_loss":True,
             "include_num_input_tokens_seen":True,
             "preprocessing_num_workers":8,
-            "eval_on_start":True
+            "eval_on_start":True,
+            "do_eval":True
         }
     
     if "lora_args" not in state:
