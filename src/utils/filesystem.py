@@ -11,5 +11,4 @@ def getDS(ds_path:str)->Tuple[List,str]:
     if os.path.exists(ds_path):
         return json.load(open(ds_path)).keys(),""
     else: 
-        print(f"未找到dataset_info.json文件")
         return [],"未找到dataset_info.json文件"

@@ -227,9 +227,12 @@ def finetune_page():
     st.markdown(
         "##### 评估设置",
     )
-    col_val_size, col_eval_batch_size, col_eval_steps = st.columns(3)
+    col_do_eval, col_val_size = st.columns([1,2])
+    with col_do_eval:
+        train_args["do_eval"] = st.toggle("使用验证", train_args["do_eval"])
     with col_val_size:
         train_args["val_size"] = st.slider("验证集比例", 0.00, 1.00, train_args["val_size"])
+    col_eval_batch_size, col_eval_steps = st.columns(2)
     with col_eval_batch_size:
         train_args["per_device_eval_batch_size"] = st.number_input(
             "每个设备的批次大小(验证)", 0, 16, train_args["per_device_eval_batch_size"]
@@ -269,8 +272,10 @@ def finetune_page():
             elif validate_args(train_args) != "":
                 st.error(validate_args(train_args), icon=":material/warning:")
             else:
-                trainer = Runner().launch(train_args, freeze_args, lora_args, state["finetune_cuda_visible_devices"])
+                runner = Runner()
+                trainer = runner.launch(train_args, freeze_args, lora_args, state["finetune_cuda_visible_devices"])
                 if trainer != None:
+                    state["runner"] = runner
                     state["trainer"] = trainer
                     state["cached_log"] = ""
                     state["cached_plot"] = None
@@ -280,11 +285,12 @@ def finetune_page():
         
         if state.get("trainer", None) is not None:
             trainer = state["trainer"]
+            runner = state.get("runner", None)
             if st.button("停止微调", key="stop", use_container_width=True, type="primary"):
-                trainer.terminate()
-                trainer.wait()
-                # os.killpg(trainer.pid, SIGTERM) 
                 state["trainer"] = None
+                if runner is not None:
+                    runner.terminate()
+                state["runner"] = None
                 st.rerun(scope="app")
         
         st.html(body = '''    
@@ -315,6 +321,7 @@ def finetune_page():
             state["cached_log"] = state["cached_log"] if new_log == "" else new_log
             
             if return_dict.get("end", False):
+                state["runner"] = None
                 state["trainer"] = None
                 st.rerun(scope="app")
                 

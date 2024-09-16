@@ -72,7 +72,11 @@ class Runner():
         }
         yield return_dict
 
-
+    def terminate(self):
+        if self.is_running:
+            self.trainer.terminate()
+            self.trainer.wait()
+        
 def get_trainer_info(output_path: os.PathLike):
     r"""
     Gets training infomation for monitor.
