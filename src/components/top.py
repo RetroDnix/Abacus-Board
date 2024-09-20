@@ -19,6 +19,7 @@ def top_page(key="ckpt_parm"):
     ckpt_parm["ckpt_options"], message = getCKPTS(ckpt_parm["ckpt_path"])
     
     # with col_ckpt:
+    print(ckpt_parm["ckpt_options"])
     selectbox(
         label="选择模型检查点",
         options=ckpt_parm["ckpt_options"],
