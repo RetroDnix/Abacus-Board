@@ -78,7 +78,7 @@ def finetune_page():
         state["cached_log"] = ""
         
     if "cuda_visible_devices" not in state:
-        state["cuda_visible_devices"] = ""
+        state["cuda_visible_devices"] = "0"
 
     st.markdown("##### 微调方法")
     st.caption("选择微调时使用的训练方式与微调方法")

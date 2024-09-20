@@ -36,7 +36,7 @@ def eval_page():
             "max_tokens": 2048,
             "num_gpus": 1,
             "num_procs": 1,
-            "cuda_visible_devices":""
+            "cuda_visible_devices":"0"
         }
         
     eval_args = state["eval_args"]

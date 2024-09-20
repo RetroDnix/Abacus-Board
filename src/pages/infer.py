@@ -24,7 +24,7 @@ def infer_page():
                 "top_p": 1.0,
                 "tensor_parallel_size": 1,
                 "gpu_memory_utilization": 0.9,
-                "cuda_visible_devices":""
+                "cuda_visible_devices":"0"
             }
         infer_args = state["infer_args"]
         
