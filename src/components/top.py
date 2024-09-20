@@ -1,5 +1,6 @@
 import streamlit as st
 from src.utils.filesystem import getCKPTS
+from src.widgets.stated_widgets import text_input, selectbox
 
 def getIndex(options, value):
     if value in options:
@@ -14,17 +15,17 @@ def top_page(key="ckpt_parm"):
         st.session_state[key] = {"ckpt_path": "./saves", "ckpt": "", "ckpt_options": []}
     ckpt_parm = st.session_state[key]
     
-    # with col_ckpt_path:
-    ckpt_parm["ckpt_path"] = st.text_input("检查点储存路径", "./saves", key="ckpt_path")
+    text_input("检查点储存路径", data=ckpt_parm, key="ckpt_path", prefix=key)
     ckpt_parm["ckpt_options"], message = getCKPTS(ckpt_parm["ckpt_path"])
     
     # with col_ckpt:
-    ckpt_parm["ckpt"] = st.selectbox(
+    selectbox(
         label="选择模型检查点",
         options=ckpt_parm["ckpt_options"],
-        index=getIndex(ckpt_parm["ckpt_options"], ckpt_parm["ckpt"]),
         placeholder="未选择",
+        data=ckpt_parm,
         key="ckpt",
+        prefix=key
     )
     
     if message != "":

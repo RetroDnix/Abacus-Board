@@ -2,6 +2,7 @@ import streamlit as st
 from src.utils.filesystem import getDS
 from src.utils.gen_cmd import gen_cmd,validate_args
 from src.components.top import top_page
+from src.widgets.stated_widgets import number_input, text_input, slider, toggle, selectbox
 from src.runner import Runner
 
 from datetime import datetime
@@ -81,47 +82,50 @@ def finetune_page():
 
     st.markdown("##### 微调方法")
     st.caption("选择微调时使用的训练方式与微调方法")
-    col_finetuning_type, col_stage = st.columns([3, 7])
+    col_finetuning_type, col_stage = st.columns(2)
     with col_finetuning_type:
         finetune_methods = ["full", "freeze", "LoRA"]
-        train_args["finetuning_type"] = st.selectbox(
+        selectbox(
             label = "训练方式", 
             options = finetune_methods,
-            index = finetune_methods.index(train_args["finetuning_type"])
+            data=train_args,
+            key="finetuning_type",
         )
     with col_stage:
-        Stage = {"Supervised Finetune": "sft", "Pretrain": "pt"}
-        stage_index = {"sft":0,"pt":1}
-        train_args["stage"] = Stage[st.selectbox(
+        selectbox(
             label = "微调阶段", 
-            options = ["Supervised Finetune", "Pretrain"],
-            index = stage_index[train_args["stage"]],
-        )]
+            options = ["sft", "pt"],
+            data=train_args,
+            help="sft: 监督微调(Supervised-Finetune),  pt: 预训练(Pretrain)",
+            key="stage"
+        )
     st.divider()
 
     st.markdown("##### 数据集")
     st.caption("选择微调时使用的数据集, 目前支持Alpaca与ShareGPT格式的数据集")
     col_ds_path, col_ds = st.columns([3, 7])
     with col_ds_path:
-        train_args["dataset_dir"] = st.text_input("数据集储存路径", train_args["dataset_dir"], key="ds_path")
+        text_input("数据集储存路径", train_args, key="dataset_dir")
     with col_ds:
         all_datasets, message = getDS(train_args.get("dataset_dir", "./data"))
-        # default = [s for s in train_args["dataset"].split(",") if s != ""]
-        train_args["dataset"] = ",".join(st.multiselect(
+        state["_dataset"] = [s for s in train_args["dataset"].split(",") if s != ""]
+        def save_dataset():
+            train_args["dataset"] = ",".join(state["_dataset"])
+        st.multiselect(
             label="选择数据集",
             options=all_datasets,
-            # default=default,
             placeholder="未选择",
-            key="ds",
-        ))
+            key="_dataset",
+            on_change=save_dataset
+        )
     if message != "":
         st.error(message, icon=":material/warning:")
 
     col_cutoff_len, col_max_samples = st.columns(2)
     with col_cutoff_len:
-        train_args["cutoff_len"] = st.number_input("截断长度", 0, 4096, train_args["cutoff_len"])
+        number_input("截断长度", 0, 4096, data=train_args, key="cutoff_len")
     with col_max_samples:
-        train_args["max_samples"] = st.number_input("最大样本数", 0, 1000000, train_args["max_samples"])
+        number_input("最大样本数", 0, 1000000, data=train_args, key="max_samples")
 
     st.divider()
 
@@ -150,96 +154,99 @@ def finetune_page():
     )
     col_learning_rate, col_batch_size, col_num_train_epochs = st.columns(3)
     with col_learning_rate:
-        train_args["learning_rate"] = st.number_input(
-            "学习率", 0.0, 1.0, train_args["learning_rate"], step=1e-5, format="%.5f"
+        number_input(
+            "学习率", 0.0, 1.0, data=train_args, key="learning_rate", step=1e-5, format="%.5f"        
         )
     with col_batch_size:
-        train_args["per_device_train_batch_size"] = st.number_input(
-            "每个设备的批次大小(训练)", 0, 16, train_args["per_device_train_batch_size"]
+        number_input(
+            "每个设备的批次大小(训练)", 0, 16, data=train_args, key="per_device_train_batch_size"
         )
     with col_num_train_epochs:
-        train_args["num_train_epochs"] = st.number_input(
-            "训练轮数", 0.0, 100.0, train_args["num_train_epochs"], step=0.1, format="%.1f"
+        number_input(
+            "训练轮数", 0.0, 100.0, data=train_args, key="num_train_epochs", step=0.1, format="%.1f"
         )
 
     col_max_grad_norm, col_grad_accu, col_lr_scheduler = st.columns(3)
     with col_max_grad_norm:
-        train_args["max_grad_norm"] = st.number_input(
-            "最大梯度范数", 0.0, 10.0, train_args["max_grad_norm"], step=0.1, format="%.1f"
+        number_input(
+            "最大梯度范数", 0.0, 10.0, data=train_args, key="max_grad_norm", step=0.1, format="%.1f"
         )
     with col_grad_accu:
-        train_args["gradient_accumulation_steps"] = st.number_input(
-            "梯度累积", 1, 1024, train_args["gradient_accumulation_steps"]
+        number_input(
+            "梯度累积", 1, 1024, data=train_args, key="gradient_accumulation_steps"
         )
     with col_lr_scheduler:
         schedulers = ["linear", "cosine", "cosine_with_restarts", "polynomial", "constant"]
-        train_args["lr_scheduler_type"] = st.selectbox(
+        selectbox(
             label="学习率调度器",
             options=schedulers,
-            index=schedulers.index(train_args["lr_scheduler_type"])
+            data=train_args,
+            key="lr_scheduler_type"
         )
 
     col_logging_steps, col_save_steps, col_precision = st.columns(
         3, vertical_alignment="center"
     )
     with col_logging_steps:
-        train_args["logging_steps"] = st.number_input("日志步数", 0, 1000, train_args["logging_steps"])
+        number_input("日志步数", 0, 1000, data=train_args, key="logging_steps")
     with col_save_steps:
-        train_args["save_steps"] = st.number_input("保存步数", 0, 1000, train_args["save_steps"])
+        number_input("保存步数", 0, 1000, data=train_args, key="save_steps")
     with col_precision:
         precisions = ["bf16", "fp16", "fp32", "pure_bp16"]
-        state["_precison"] = st.selectbox(
+        def save_percisions():
+            state["precison"] = state["_precison"]
+        state["_precison"] = state.get("precison", "bf16")
+        st.selectbox(
             label="精度", 
             options=precisions, 
-            index=precisions.index(state.get("_precison", "bf16")), 
+            key="_precison",
+            on_change=save_percisions
         )
         precision = state["_precison"]
         if precision != "fp32":
             train_args[precision] = True
 
-    train_args["warmup_ratio"] = st.slider(
-        "预热步数比例", 0.00, 1.00, train_args["warmup_ratio"], step=0.01, format="%.2f"
+    slider(
+        "预热步数比例", 0.00, 1.00, data=train_args, key="warmup_ratio", step=0.01, format="%.2f"
     )
 
     with st.expander("lora训练设置"):
         col_lora_rank, col_lora_alpha, col_lora_dropout = st.columns(3)
         with col_lora_rank:
-            lora_args["lora_rank"] = st.number_input("LoRA 矩阵的秩大小", 0, 1024, lora_args["lora_rank"], key="lora_rank")
+            number_input("LoRA 矩阵的秩大小", 0, 1024, data=lora_args, key="lora_rank")
         with col_lora_alpha:
-            lora_args["lora_alpha"] = st.number_input("LoRA 缩放系数大小", 0, 2048, lora_args["lora_alpha"], step=1, key="lora_alpha")
+            number_input("LoRA 缩放系数大小", 0, 2048, data=lora_args, step=1, key="lora_alpha")
         with col_lora_dropout:
-            lora_args["lora_dropout"] = st.slider("LoRA 权重随机丢弃的概率", 0.0, 1.0, lora_args["lora_dropout"], step=0.01, format="%.2f", key="lora_dropout")
+            slider("LoRA 权重随机丢弃的概率", 0.0, 1.0, data=lora_args, step=0.01, format="%.2f", key="lora_dropout")
         col_use_rslora, col_use_dora, col_use_pissa, col_new_adpter = st.columns(4)
         with col_use_rslora:
-            lora_args["use_rslora"] = st.toggle("使用RS-LoRA", value=lora_args["use_rslora"], key="use_rslora")
+            toggle("使用RS-LoRA", data=lora_args, key="use_rslora")
         with col_use_dora:
-            lora_args["use_dora"] = st.toggle("使用D-LoRA", value=lora_args["use_dora"], key="use_dora")
+            toggle("使用D-LoRA", data=lora_args, key="use_dora")
         with col_use_pissa:
-            lora_args["pissa_convert"] = lora_args["pissa_init"] = st.toggle("使用PiSSA", value=lora_args["pissa_convert"], key="use_pissa")
+            lora_args["pissa_init"] = toggle("使用PiSSA", data=lora_args, key="pissa_convert")
         with col_new_adpter:
-            lora_args["create_new_adapter"] = st.toggle("新建Lora适配器", value=lora_args["create_new_adapter"], key="new_adapter")
+            toggle("新建Lora适配器", data=lora_args, key="create_new_adapter")
     
     with st.expander("部分参数训练训练设置"):
         st.caption("最末尾（+）/最前端（-）可训练隐藏层的数量。")
-        freeze_args["freeze_trainable_layers"] = st.slider("可训练层数", -128, 128, freeze_args["freeze_trainable_layers"], step=1, label_visibility="hidden", key="freeze_trainable_layers")
+        slider("可训练层数", -128, 128, data=freeze_args, key="freeze_trainable_layers", step=1, label_visibility="hidden")
     
     st.divider()
 
     st.markdown(
         "##### 评估设置",
     )
-    col_do_eval, col_val_size = st.columns([1,2])
+    slider("验证集比例", 0.00, 1.00, data=train_args, key="val_size")
+    col_do_eval, col_eval_batch_size, col_eval_steps = st.columns(3, vertical_alignment="bottom")
     with col_do_eval:
-        train_args["do_eval"] = st.toggle("使用验证", train_args["do_eval"])
-    with col_val_size:
-        train_args["val_size"] = st.slider("验证集比例", 0.00, 1.00, train_args["val_size"])
-    col_eval_batch_size, col_eval_steps = st.columns(2)
+        toggle("在训练过程中进行评估", data=train_args, key="do_eval")
     with col_eval_batch_size:
-        train_args["per_device_eval_batch_size"] = st.number_input(
-            "每个设备的批次大小(验证)", 0, 16, train_args["per_device_eval_batch_size"]
+        number_input(
+            "每个设备的批次大小(验证)", 0, 16, data=train_args, key="per_device_eval_batch_size"
         )
     with col_eval_steps:
-        train_args["eval_steps"] = st.number_input("验证步数", 0, 1000, train_args["eval_steps"])
+        number_input("验证步数", 0, 1000, data=train_args, key="eval_steps")
     
     st.divider()
     
@@ -248,8 +255,15 @@ def finetune_page():
         train_args["model_name_or_path"] = None if ckpt == None else os.path.join(ckpt_path, ckpt)
         
         st.markdown("##### 资源分配")
-        state["finetune_cuda_visible_devices"] = st.text_input("CUDA_VISIBLE_DEVICES", value=state.get("finetune_cuda_visible_devices",""))
-        train_args["preprocessing_num_workers"] = st.number_input("预处理工作线程数", 0, 128, train_args["preprocessing_num_workers"])
+        state["_finetune_cuda_visible_devices"] = state.get("finetune_cuda_visible_devices", "")
+        def save_cuda():
+            state["finetune_cuda_visible_devices"] = state["_finetune_cuda_visible_devices"]
+        st.text_input(
+            "CUDA_VISIBLE_DEVICES", 
+            key="_finetune_cuda_visible_devices",
+            on_change= save_cuda
+        )
+        number_input("预处理工作线程数", 0, 128, data=train_args, key="preprocessing_num_workers")
         
         st.divider()
         

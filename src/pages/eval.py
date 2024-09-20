@@ -2,6 +2,7 @@ import streamlit as st
 from subprocess import Popen
 from src.eval_runner import start_eval
 from src.components.top import top_page
+from src.widgets.stated_widgets import number_input, text_input
 import os
 from glob import glob
 import random
@@ -42,12 +43,15 @@ def eval_page():
     
     all_datasets = ["HumanEval", "HumanEval+", "MBPP[sanitized]","MBPP+", "MMLU", "HellaSwag", "ARC-e", "BBH", "C-Eval", "CMMLU", "GSM8K"]
     
-    eval_args["abbr"] = st.text_input("任务名称", value = eval_args["abbr"], key="abbr")
-    eval_args["dataset"] = st.multiselect(
+    text_input("任务名称", data = eval_args, key="abbr")
+    def save_dataset():
+        eval_args["dataset"] = state["ds_eval"]
+    st.multiselect(
         label="选择数据集",
         options=all_datasets,
         placeholder="未选择",
         key="ds_eval",
+        on_change=save_dataset
     )              
     
     st.divider()
@@ -56,19 +60,19 @@ def eval_page():
     
     col_max_out_len, col_max_seq_len, col_batch_size = st.columns(3)
     with col_max_out_len:
-        eval_args["max_out_len"] = st.number_input("最大输出长度", 0, 4096, eval_args["max_out_len"], key="max_out_len")
+        number_input("最大输出长度", 0, 4096, data=eval_args, key="max_out_len", prefix="_eval_")
     with col_max_seq_len:
-        eval_args["max_seq_len"] = st.number_input("最大序列长度", 0, 4096, eval_args["max_seq_len"], key="max_seq_len")
+        number_input("最大序列长度", 0, 4096, data=eval_args, key="max_seq_len", prefix="_eval_")
     with col_batch_size:
-        eval_args["batch_size"] = st.number_input("批次大小", 0, 128, eval_args["batch_size"], key="batch_size")
+        number_input("批次大小", 0, 128, data=eval_args, key="batch_size", prefix="_eval_")
     
     col_temperature, col_top_p, col_max_tokens = st.columns(3)
     with col_temperature:
-        eval_args["temperature"] = st.number_input("Temperature", 0.0, 1.0, eval_args["temperature"], key="temperature")
+        number_input("Temperature", 0.0, 1.0, data=eval_args, key="temperature", prefix="_eval_")
     with col_top_p:
-        eval_args["top_p"] = st.number_input("Top-p", 0.0, 1.0, eval_args["top_p"], key="top_p")
+        number_input("Top-p", 0.0, 1.0, data=eval_args, key="top_p", prefix="_eval_")
     with col_max_tokens:
-        eval_args["max_tokens"] = st.number_input("Max tokens", 0, 4096, eval_args["max_tokens"], key="max_tokens")
+        number_input("Max tokens", 0, 4096, data=eval_args, key="max_tokens", prefix="_eval_")
     
     st.divider()
     
@@ -119,13 +123,13 @@ def eval_page():
         ckpt_path, ckpt = top_page("eval_ckpt_parm")
         
         st.markdown("##### 资源分配")
-        eval_args["cuda_visible_devices"] = st.text_input("CUDA_VISIBLE_DEVICES", value=eval_args["cuda_visible_devices"])
+        text_input("CUDA_VISIBLE_DEVICES", data=eval_args, key="cuda_visible_devices", prefix="_eval_")
         col_num_gpus, col_num_procs = st.columns(2)
         with col_num_gpus:
-            eval_args["num_gpus"] = st.number_input("GPU数量", 0, 8, eval_args["num_gpus"], key="num_gpus")
+            number_input("GPU数量", 0, 8, data=eval_args, key="num_gpus", prefix="_eval_")
         
         with col_num_procs:
-            eval_args["num_procs"] = st.number_input("CPU核心数量", 0, 128, eval_args["num_procs"], key="num_procs")
+            number_input("CPU核心数量", 0, 128, data=eval_args, key="num_procs", prefix="_eval_")
         
         st.divider()
         

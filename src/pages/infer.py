@@ -2,6 +2,7 @@ from openai import OpenAI
 import streamlit as st
 from subprocess import Popen, PIPE, STDOUT
 from src.components.top import top_page
+from src.widgets.stated_widgets import number_input, text_input, slider, toggle, selectbox
 import os
 from copy import deepcopy
 import select  
@@ -10,8 +11,6 @@ from signal import SIGTERM
 def infer_page():
     openai_api_key = "EMPTY"
     openai_api_base = "http://localhost:8000/v1"
-    
-    system_prompt = "你是珠算，一个人工智能助手。你需要使用中文对于user的提问进行回答。请在回答时使用Markdown格式。如果回答中包含代码块，你需要指定代码块的语言并添加注释。"
     
     with st.sidebar:
         state = st.session_state
@@ -49,19 +48,24 @@ def infer_page():
         st.markdown("##### 推理参数")
         col_max_tokens, col_temperature, col_top_p = st.columns(3)
         with col_max_tokens:
-            infer_args["max_tokens"] = st.number_input("最大标记数", min_value=1, max_value=4096, value=infer_args["max_tokens"])
+            number_input("最大标记数", min_value=1, max_value=4096, data=infer_args, key="max_tokens", prefix="_infer_")
         with col_temperature:
-            infer_args["temperature"] = st.number_input("温度", min_value=0.0, max_value=1.0, value=infer_args["temperature"])
+            number_input("温度", min_value=0.0, max_value=1.0, data=infer_args, key="temperature", prefix="_infer_")
         with col_top_p:
-            infer_args["top_p"] = st.number_input("Top-p", min_value=0.0, max_value=1.0, value=infer_args["top_p"])
+            number_input("Top-p", min_value=0.0, max_value=1.0, data=infer_args, key="top_p", prefix="_infer_")
+        
+        state["_infer_system_prompt"] = infer_args.get("infer_system_prompt", "")
+        def save_sys_prompt():
+            infer_args["infer_system_prompt"] = state["_infer_system_prompt"]
+        st.text_area(label="System Prompt", key="_infer_system_prompt", on_change=save_sys_prompt)
         
         st.markdown("##### 资源分配")
-        infer_args["cuda_visible_devices"] = st.text_input("CUDA_VISIBLE_DEVICES", value=infer_args["cuda_visible_devices"])
+        text_input("CUDA_VISIBLE_DEVICES", data=infer_args, key="cuda_visible_devices", prefix="_infer_")
         col_tensor_parallel_size, col_gpu_memory_utilization = st.columns(2)
         with col_tensor_parallel_size:
-            infer_args["tensor_parallel_size"] = st.number_input("Tensor并行大小", min_value=1, max_value=8, value=infer_args["tensor_parallel_size"])
+            number_input("Tensor并行大小", min_value=1, max_value=8, data=infer_args, key="tensor_parallel_size", prefix="_infer_")
         with col_gpu_memory_utilization:
-            infer_args["gpu_memory_utilization"] = st.number_input("GPU内存利用率目标", min_value=0.0, max_value=1.0, value=infer_args["gpu_memory_utilization"])
+            number_input("GPU内存利用率目标", min_value=0.0, max_value=1.0, data=infer_args, key="gpu_memory_utilization", prefix="_infer_")
         
         st.divider()
         
@@ -167,12 +171,13 @@ def infer_page():
             with st.chat_message("user"):
                 st.markdown(prompt)
             with st.chat_message("assistant"):
+                sysprompt = infer_args.get("infer_system_prompt","")
+                cur_messages=[ {"role": m["role"], "content": m["content"]} for m in state.messages ]
+                if sysprompt != "":
+                    cur_messages = [{"role":"system", "content": sysprompt}] + cur_messages
                 stream = client.chat.completions.create(
                     model=state["infer_ckpt_full_path"],
-                    messages=[
-                        {"role": m["role"], "content": m["content"]}
-                        for m in state.messages
-                    ],
+                    messages = cur_messages,
                     stream=True,
                     temperature=infer_args["temperature"],
                     max_tokens=infer_args["max_tokens"],
