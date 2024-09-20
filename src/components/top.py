@@ -12,7 +12,7 @@ def top_page(key="ckpt_parm"):
     # col_ckpt_path, col_ckpt = st.columns([3,7])
     
     if key not in st.session_state:
-        st.session_state[key] = {"ckpt_path": "./saves", "ckpt": "", "ckpt_options": []}
+        st.session_state[key] = {"ckpt_path": "./saves", "ckpt": None, "ckpt_options": []}
     ckpt_parm = st.session_state[key]
     
     text_input("检查点储存路径", data=ckpt_parm, key="ckpt_path", prefix=key)
