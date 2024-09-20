@@ -4,7 +4,7 @@ from subprocess import Popen, TimeoutExpired
 from typing import Any, Dict, List
 from src.utils.gen_cmd import gen_cmd
 from src.utils.plot import gen_loss_plot
-
+from signal import SIGTERM
 
 RUNNING_LOG = "running_log.txt"
 TRAINER_LOG = "trainer_log.jsonl"

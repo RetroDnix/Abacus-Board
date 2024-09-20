@@ -290,7 +290,7 @@ def finetune_page():
                 runner = Runner()
                 trainer = runner.launch(train_args, freeze_args, lora_args, state["finetune_cuda_visible_devices"])
                 if trainer != None:
-                    state["runner"] = runner
+                    # state["runner"] = runner
                     state["trainer"] = trainer
                     state["cached_log"] = ""
                     state["cached_plot"] = None
@@ -298,15 +298,15 @@ def finetune_page():
                 print("开始模型微调")
                 st.rerun(scope="app")
         
-        if state.get("trainer", None) is not None:
-            trainer = state["trainer"]
-            runner = state.get("runner", None)
-            if st.button("停止微调", key="stop", use_container_width=True, type="primary"):
-                state["trainer"] = None
-                if runner is not None:
-                    runner.terminate()
-                state["runner"] = None
-                st.rerun(scope="app")
+        # if state.get("trainer", None) is not None:
+        #     trainer = state["trainer"]
+        #     runner = state.get("runner", None)
+        #     if st.button("停止微调", key="stop", use_container_width=True, type="primary"):
+        #         state["trainer"] = None
+        #         if runner is not None:
+        #             runner.terminate()
+        #         state["runner"] = None
+        #         st.rerun(scope="app")
         
         st.html(body = '''    
             <div style="text-align: center;color: gray; font-size: 12px;">
