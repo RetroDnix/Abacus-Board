@@ -76,9 +76,6 @@ def finetune_page():
     
     if "cached_log" not in state:
         state["cached_log"] = ""
-        
-    if "cuda_visible_devices" not in state:
-        state["cuda_visible_devices"] = "0"
 
     st.markdown("##### 微调方法")
     st.caption("选择微调时使用的训练方式与微调方法")
@@ -255,7 +252,7 @@ def finetune_page():
         train_args["model_name_or_path"] = None if ckpt == None else os.path.join(ckpt_path, ckpt)
         
         st.markdown("##### 资源分配")
-        state["_finetune_cuda_visible_devices"] = state.get("finetune_cuda_visible_devices", "")
+        state["_finetune_cuda_visible_devices"] = state.get("finetune_cuda_visible_devices", "0")
         def save_cuda():
             state["finetune_cuda_visible_devices"] = state["_finetune_cuda_visible_devices"]
         st.text_input(
