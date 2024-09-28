@@ -41,17 +41,20 @@ RUN git clone https://github.com/hiyouga/LLaMA-Factory.git && \
     git checkout v0.9.0 && \
     pip3 install -e ".[torch,metrics]" torch==2.3.0 --no-cache-dir
 
+# 安装opencompass
+# 该opencompass拷贝在0.2.3版本的基础上进行了小幅度修改
 RUN cd opencompass && \
     pip3 install -e .[full,vllm] torch==2.3.0 --no-cache-dir 
 
-WORKDIR /workspace/Abacus-Board/opencompass/
-
-# 准备humaneval+测试
+# 准备eval-plus
 RUN git clone --recurse-submodules git@github.com:open-compass/human-eval.git && \
     cd human-eval && \
     pip3 install -e . --no-cache-dir && \
     pip3 install -e evalplus --no-cache-dir 
 
-WORKDIR /workspace/Abacus-Board
+# 将humaneval+与mbpp+数据拷贝到缓存目录,这是为了避免因为计算节点断网导致数据下载失败
+RUN mkdir -p ~/.cache/evalplus && \
+    cp EvalPlusData/HumanEvalPlus-v0.1.9.jsonl ~/.cache/evalplus && \
+    cp EvalPlusData/MbppPlus-v0.1.0.jsonl ~/.cache/evalplus && \
 
 CMD ["streamlit","run","main.py"]
