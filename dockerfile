@@ -44,9 +44,14 @@ RUN git clone https://github.com/hiyouga/LLaMA-Factory.git && \
 RUN cd opencompass && \
     pip3 install -e .[full,vllm] torch==2.3.0 --no-cache-dir 
 
+WORKDIR /workspace/Abacus-Board/opencompass/
+
 # 准备humaneval+测试
-RUN cd opencompass/human-eval && \
+RUN git clone --recurse-submodules git@github.com:open-compass/human-eval.git && \
+    cd human-eval && \
     pip3 install -e . --no-cache-dir && \
     pip3 install -e evalplus --no-cache-dir 
+
+WORKDIR /workspace/Abacus-Board
 
 CMD ["streamlit","run","main.py"]
