@@ -16,7 +16,7 @@ def finetune_page():
         state["train_args"] = {
             "finetuning_type":"full",
             "stage":"sft",
-            "dataset_dir": "./data",
+            "dataset_dir": "./data-example",
             "dataset":"",
             "cutoff_len":1024,
             "max_samples":100000,
@@ -40,8 +40,8 @@ def finetune_page():
             "plot_loss":True,
             "include_num_input_tokens_seen":True,
             "preprocessing_num_workers":8,
-            "eval_on_start":True,
-            "do_eval":True
+            "eval_on_start":False,
+            "do_eval":False
         }
     
     if "lora_args" not in state:

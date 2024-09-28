@@ -38,8 +38,8 @@ RUN pip3 install vllm==0.4.3 streamlit --no-cache-dir
 # 安装Llamafactory
 RUN git clone https://github.com/hiyouga/LLaMA-Factory.git && \
     cd LLaMA-Factory && \
-    git checkout v0.9.0 && \
-    pip3 install -e ".[torch,metrics]" torch==2.3.0 --no-cache-dir
+    # git checkout v0.8.3 && \
+    pip3 install -e ".[torch,metrics]" torch==2.3.0 accelerate==0.34.2 --no-cache-dir
 
 # 安装opencompass
 # 该opencompass拷贝在0.2.3版本的基础上进行了小幅度修改

@@ -88,12 +88,12 @@ def infer_page():
                     env = deepcopy(os.environ)
                     env["CUDA_VISIBLE_DEVICES"] = infer_args["cuda_visible_devices"]
                     state["infer_ckpt_full_path"] = os.path.join(ckpt_path, ckpt)
-                    cmd = "vllm serve --trust-remote-code %s --gpu-memory-utilization %s --tensor-parallel-size %s" % (
+                    cmd = "python -m vllm.entrypoints.openai.api_server --trust-remote-code --model %s --gpu-memory-utilization %s --tensor-parallel-size %s" % (
                         state["infer_ckpt_full_path"],
                         infer_args["gpu_memory_utilization"],
                         infer_args["tensor_parallel_size"],
                     )
-                    state["vllm_instance"] = Popen(cmd, stdout=PIPE, env=env, shell=True, preexec_fn=os.setsid)
+                    state["vllm_instance"] = Popen(cmd, stdout=PIPE, stderr=STDOUT, env=env, shell=True, preexec_fn=os.setsid)
                     state["vllm_log"] = ""
                     st.toast("开始加载模型", icon=":material/info:")
                     print("开始加载模型")
