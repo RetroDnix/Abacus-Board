@@ -266,10 +266,6 @@ class MBPPEvaluator(BaseEvaluator):
                     index, key = future.result()
                     result[key] += 1
                     details[str(index)]['result'] = key
-            with open('/home/jishiyu/code/opencompass/test_data/mbpp/stable.json', 'w') as f:
-                for key, value in details.items():
-                    json_line = json.dumps({key: value}, ensure_ascii=False)  # 将字典转换为 JSON 字符串
-                    f.write(json_line + '\n')     # 写入文件并添加换行
             
             result['score'] = result['pass'] / len(predictions) * 100
             result['details'] = details
