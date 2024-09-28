@@ -35,7 +35,7 @@ def eval_page():
             "top_p": 1.0,
             "max_tokens": 2048,
             "num_gpus": 1,
-            "num_procs": 1,
+            "num_procs": 8,
             "cuda_visible_devices":"0"
         }
         

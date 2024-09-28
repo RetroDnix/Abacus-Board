@@ -3,10 +3,10 @@ from opencompass.models import HuggingFace, VLLM
 from mmengine.config import read_base
 
 with read_base():
-    from .datasets.humaneval.humaneval_gen_8e312c import humaneval_datasets
+    from .datasets.humaneval.deprecated_humaneval_gen_8e312c import humaneval_datasets
     from .datasets.humaneval_plus.humaneval_plus_gen_8e312c import humaneval_plus_datasets
-    from .datasets.mbpp.deprecated_sanitized_mbpp_gen_1e1056 import sanitized_mbpp_datasets
-    from .datasets.mbpp_plus.deprecated_mbpp_plus_gen_94815c import mbpp_plus_datasets
+    from .datasets.mbpp.sanitized_mbpp_gen_1e1056 import sanitized_mbpp_datasets
+    from .datasets.mbpp_plus.mbpp_plus_gen_94815c import mbpp_plus_datasets
     
     from .datasets.mmlu.mmlu_gen_4d595a import mmlu_datasets
     from .datasets.hellaswag.hellaswag_gen_6faab5 import hellaswag_datasets
