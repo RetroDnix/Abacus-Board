@@ -112,6 +112,44 @@ class SanitizedMBPPDataset(BaseDataset):
         test = concatenate_datasets([test] * num_repeats)
         return DatasetDict({'train': train, 'test': test})
 
+class LBPPDataset(BaseDataset):
+
+    @staticmethod
+    def load(path: str, num_repeats: int = 1):
+        """Load mbpp dataset for pass k mode.
+
+        Note that you can use num_repeats > 1 when your model does not support
+        `num_return_sequence` in generation, otherwise use the raw
+        mbpp dataset and set `num_return_sequence` in model config to
+        generate multiple responses for testing pass@k>1.
+
+        It better to change your dataset abbr correspondingly if you want to
+        change num_repeats>1, otherwise the number in
+        `.cache/dataset_size.json` might be inconsistent.
+
+        Args:
+            num_repeats(int): Number of repetition for this dataset to get
+        multiple responses in special cases.
+        """
+
+        def processing_test(example):
+            example['text'] = example.pop('instruction')
+            # used for prompt
+            example['func_name'] = example.pop('title')
+            example['test_list'] = '\n'.join(example['test_list'])
+            # used for eval
+            example['test_list_2'] = example['test_list']
+            example['test_column'] = dict(test_list_2=example['test_list'],
+                                          task_id=example['task_id'])
+            return example
+
+        # train : test = 7 : 257
+        train = load_dataset('json', data_files=path,
+                             split='train[:1]').map(processing_test)
+        test = load_dataset('json', data_files=path,
+                            split='train[0:162]').map(processing_test)
+        test = concatenate_datasets([test] * num_repeats)
+        return DatasetDict({'train': train, 'test': test})
 
 class MBPPPlusDataset(BaseDataset):
 
@@ -196,12 +234,12 @@ class MBPPEvaluator(BaseEvaluator):
 
     def __init__(self, metric: str = 'MBPP') -> None:
         self.metric = metric
-        assert self.metric in ['MBPP', 'MBPPPlus']
+        assert self.metric in ['MBPP', 'MBPPPlus', 'LBPP']
 
     def score(self, predictions, references):
         assert len(predictions) == len(references)
 
-        if self.metric == 'MBPP':
+        if self.metric == 'MBPP' or self.metric == 'LBPP':
             result = {'pass': 0, 'timeout': 0, 'failed': 0, 'wrong_answer': 0}
             details = {}
             # change to thread pool for better killing blocked instance
@@ -209,12 +247,18 @@ class MBPPEvaluator(BaseEvaluator):
                 futures = []
                 for i, (refer, pred) in enumerate(zip(references,
                                                       predictions)):
-                    pred = self._process_answer(pred)
+                    if self.metric == 'LBPP':
+                        pred = self._process_answer_lbpp(pred)
+                        print(f'--------------------{i}-------------------------')
+                        print(pred)
+                    else:
+                        pred = self._process_answer(pred)
                     programs = self._process_test(refer, pred)
-                    future = executor.submit(execution, programs, i, 3)
+                    future = executor.submit(execution, programs, i, 500)
                     futures.append(future)
                     details[str(i)] = {}
                     details[str(i)]['origin'] = predictions[i]
+                    details[str(i)]['preprocess'] = pred
                     details[str(i)]['programs'] = programs
 
                 from tqdm import tqdm
@@ -222,7 +266,11 @@ class MBPPEvaluator(BaseEvaluator):
                     index, key = future.result()
                     result[key] += 1
                     details[str(index)]['result'] = key
-
+            with open('/home/jishiyu/code/opencompass/test_data/mbpp/stable.json', 'w') as f:
+                for key, value in details.items():
+                    json_line = json.dumps({key: value}, ensure_ascii=False)  # 将字典转换为 JSON 字符串
+                    f.write(json_line + '\n')     # 写入文件并添加换行
+            
             result['score'] = result['pass'] / len(predictions) * 100
             result['details'] = details
             return result
@@ -244,6 +292,7 @@ class MBPPEvaluator(BaseEvaluator):
                 if not isinstance(preds, list):
                     preds = [preds]
                 for pred in preds:
+                    pred = self._process_answer(pred)
                     mbpp_preds.append({'task_id': refer, 'solution': pred})
             with tempfile.TemporaryDirectory() as tmp_dir:
                 out_dir = osp.join(tmp_dir, 'mbpp_eval.jsonl')
@@ -254,7 +303,7 @@ class MBPPEvaluator(BaseEvaluator):
                              parallel=None,
                              i_just_wanna_run=None,
                              test_details=0.2,
-                             min_time_limit=0.2,
+                             min_time_limit=15.0,
                              gt_time_limit_factor=4.0,
                              mini=None)
                 score = self.eval(flags)
@@ -294,6 +343,49 @@ class MBPPEvaluator(BaseEvaluator):
         match = re.search(r'```python(.*)```', text, re.DOTALL)
         if match:
             text = match.group(1).strip().split('```')[0].strip()
+        return text
+        patterns = [
+            r"\[BEGIN\]\s*'(.*)'\s*\[DONE\]",
+            r"BEGIN\s*'(.*)'\s*\[DONE\]",
+            r"\[BEGIN\]\s*'(.*)'\s*DONE",
+            r"BEGIN\s*'(.*)'\s*DONE",
+            r"\[BEGIN\]\s*'(.*)\s*\[DONE\]",
+            r"BEGIN\s*'(.*)\s*\[DONE\]",
+            r"\[BEGIN\]\s*'(.*)\s*DONE",
+            r"BEGIN\s*'(.*)\s*DONE",
+            r'\[BEGIN\]\s*(.*)\s*\[DONE\]',
+            r'BEGIN\s*(.*)\s*\[DONE\]',
+            r'\[BEGIN\]\s*(.*)\s*DONE',
+            r'BEGIN\s*(.*)\s*DONE',
+            r'```python\s*(.*)\s*```',
+            r'```\s*(.*)\s*```',
+            r'```python\s*(.*)\s*$',
+            r'```\s*(.*)\s*$',
+            r'(.*)\s*```.*',
+            r"\[BEGIN\]\s*'(.*)",
+            r'\[BEGIN\](.*)',
+            r"'(.*)'\s*\[DONE\]",
+        ]
+        for p in patterns:
+            match = re.search(p, text, re.DOTALL)
+            if match:
+                text = match.group(1)
+                break
+        text = text.split('```')[0]
+        text = re.split(r"'?\s*\[?DONE\]?", text)[0]
+        text = text.replace('\\_', '_')
+        text = text.strip()
+        return text
+
+    def _process_answer_lbpp(self, text):
+        print(text)
+        text = text.lstrip()
+        print(text)
+        blocks = re.findall(r'```\w*\n(.*?)```', text, re.DOTALL)
+        if len(blocks) >= 1:
+            text = blocks[0]
+        print(text)
+        
         return text
 
     def _process_test(self, test_case, pred):
@@ -450,7 +542,7 @@ class MBPPPassKEvaluator(MBPPEvaluator):
                 for pred in preds:
                     pred = self._process_answer(pred)
                     programs = self._process_test(test_case, pred)
-                    future = executor.submit(execution, programs, task_id, 3)
+                    future = executor.submit(execution, programs, task_id, 20)
                     futures.append(future)
 
             from tqdm import tqdm
@@ -475,3 +567,41 @@ class MBPPPassKEvaluator(MBPPEvaluator):
         }
         result.update(pass_at_k)
         return result
+
+def _stop_at_stop_token(decoded_string, stop_tokens):
+        """
+        Produces the prefix of decoded_string that ends at the first occurrence of
+        a stop_token.
+        WARNING: the decoded_string *must not* include the prompt, which may have stop tokens
+        itself.
+        """
+        min_stop_index = len(decoded_string)
+        for stop_token in stop_tokens:
+            stop_index = decoded_string.find(stop_token)
+            if stop_index != -1 and stop_index < min_stop_index:
+                min_stop_index = stop_index
+        return decoded_string[:min_stop_index]
+
+def extract_first_match(text, start_token, end_token):
+    """
+    Extracts the first substring found between the start_token and end_token.
+    """
+    pattern = re.escape(start_token) + '(.*?)' + re.escape(end_token)
+    match = re.search(pattern, text, re.DOTALL)
+    if match:
+        return match.group(1)
+    return text
+
+def MBPP_postprocess_v2(text: str) -> str:
+    """This is an advanced version of previous postprocess to handle more
+    situations, better to use this one."""
+
+    # # Extract content between [PYTHON] and [/PYTHON]
+    # text = extract_first_match(text, '[PYTHON]', '[/PYTHON]')
+    
+    # # If no match for [PYTHON] ... [/PYTHON], try ``` ... ```
+    # if text == text:
+    #     text = extract_first_match(text, '```', '```')
+
+    stop_words=["\nclass", "\nassert", '\n"""', "\nprint", "\nif", "\n<|/", "\n```"]
+    text = _stop_at_stop_token(text,stop_words)
