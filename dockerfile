@@ -55,6 +55,6 @@ RUN git clone --recurse-submodules git@github.com:open-compass/human-eval.git &&
 # 将humaneval+与mbpp+数据拷贝到缓存目录,这是为了避免因为计算节点断网导致数据下载失败
 RUN mkdir -p ~/.cache/evalplus && \
     cp EvalPlusData/HumanEvalPlus-v0.1.9.jsonl ~/.cache/evalplus && \
-    cp EvalPlusData/MbppPlus-v0.1.0.jsonl ~/.cache/evalplus && \
+    cp EvalPlusData/MbppPlus-v0.1.0.jsonl ~/.cache/EvalPlusData
 
 CMD ["streamlit","run","main.py"]
