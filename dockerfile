@@ -47,7 +47,7 @@ RUN cd opencompass && \
     pip3 install -e .[full,vllm] torch==2.3.0 --no-cache-dir 
 
 # 准备eval-plus
-RUN git clone --recurse-submodules git@github.com:open-compass/human-eval.git && \
+RUN git clone --recurse-submodules https://github.com/open-compass/human-eval.git && \
     cd human-eval && \
     pip3 install -e . --no-cache-dir && \
     pip3 install -e evalplus --no-cache-dir 
@@ -57,4 +57,4 @@ RUN mkdir -p ~/.cache/evalplus && \
     cp EvalPlusData/HumanEvalPlus-v0.1.9.jsonl ~/.cache/evalplus && \
     cp EvalPlusData/MbppPlus-v0.1.0.jsonl ~/.cache/EvalPlusData
 
-CMD ["streamlit","run","main.py"]
+CMD ["streamlit","run","main.py","--server.port=8888","--server.address=127.0.0.1"]
