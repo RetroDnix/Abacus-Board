@@ -12,9 +12,9 @@ st.set_page_config(
     page_title='''"珠算"大模型微调适配平台''',
     page_icon="🧊",
     layout="centered",    # 'wide' or 'centered'
-    # menu_items={
-    #     'About': 'https://www.baidu.com',
-    # }
+    menu_items={
+        'About': 'http://ir.hit.edu.cn/',
+    }
 )
 pg = st.navigation([p_finetune, p_eval, p_infer])
 pg.run()
