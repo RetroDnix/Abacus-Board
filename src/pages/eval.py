@@ -8,7 +8,7 @@ from glob import glob
 import random
 import pandas as pd
 from copy import deepcopy
-from signal import SIGTERM
+from signal import SIGINT
 
 def eval_page():
     random.seed()
@@ -95,7 +95,7 @@ def eval_page():
                     state["eval_result"] = pd.read_csv(files[0])
                 st.rerun(scope="app")
                     
-        with st.expander("OpenCompass日志", expanded=True, icon=":material/monitoring:"):
+        with st.expander("模型评估日志", expanded=True, icon=":material/monitoring:"):
             with st.container(height=500):
                 st.text(state["opc_log"])
         
@@ -166,9 +166,9 @@ def eval_page():
         if stop_evaluate:
             instance = state.get("opc_instance", None)
             if instance != None:
-                instance.terminate()
+                # instance.terminate()
+                os.killpg(instance.pid, SIGINT)
                 instance.wait()
-                os.killpg(instance.pid, SIGTERM)
                 state["opc_log"] += "terminated\n"
                 state["opc_instance"] = None
                 st.toast("评测任务已终止", icon=":material/info:")

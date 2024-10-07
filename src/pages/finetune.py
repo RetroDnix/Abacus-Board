@@ -1,6 +1,7 @@
 import streamlit as st
 from src.utils.filesystem import getDS
 from src.utils.gen_cmd import gen_cmd,validate_args
+from src.utils.mem_gc import torch_gc, abort_process
 from src.components.top import top_page
 from src.widgets.stated_widgets import number_input, text_input, slider, toggle, selectbox
 from src.runner import Runner
@@ -290,7 +291,7 @@ def finetune_page():
                 runner = Runner()
                 trainer = runner.launch(train_args, freeze_args, lora_args, state["finetune_cuda_visible_devices"])
                 if trainer != None:
-                    # state["runner"] = runner
+                    state["runner"] = runner
                     state["trainer"] = trainer
                     state["cached_log"] = ""
                     state["cached_plot"] = None
@@ -298,15 +299,16 @@ def finetune_page():
                 print("开始模型微调")
                 st.rerun(scope="app")
         
-        # if state.get("trainer", None) is not None:
-        #     trainer = state["trainer"]
-        #     runner = state.get("runner", None)
-        #     if st.button("停止微调", key="stop", use_container_width=True, type="primary"):
-        #         state["trainer"] = None
-        #         if runner is not None:
-        #             runner.terminate()
-        #         state["runner"] = None
-        #         st.rerun(scope="app")
+        if state.get("trainer", None) is not None:
+            trainer = state["trainer"]
+            runner = state.get("runner", None)
+            if st.button("停止微调", key="stop", use_container_width=True, type="primary"):
+                state["trainer"] = None
+                if runner is not None:
+                    abort_process(runner.pid)
+                    torch_gc()
+                state["runner"] = None
+                st.rerun(scope="app")
         
         st.html(body = '''    
             <div style="text-align: center;color: gray; font-size: 12px;">
@@ -360,7 +362,7 @@ def finetune_page():
             st.success("模型微调完成", icon=":material/check:")
         else: 
             st.info("空闲", icon=":material/info:")
-        with st.expander("OpenCompass日志", expanded=True, icon=":material/monitoring:"):
+        with st.expander("模型微调日志", expanded=True, icon=":material/monitoring:"):
             if state["cached_plot"] != None:
                 st.pyplot(state["cached_plot"])
             

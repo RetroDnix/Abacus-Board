@@ -3,14 +3,15 @@ import streamlit as st
 from subprocess import Popen, PIPE, STDOUT
 from src.components.top import top_page
 from src.widgets.stated_widgets import number_input, text_input, slider, toggle, selectbox
+from src.utils.mem_gc import torch_gc
 import os
 from copy import deepcopy
 import select  
-from signal import SIGTERM
+from signal import SIGINT
 
 def infer_page():
     openai_api_key = "EMPTY"
-    openai_api_base = "http://localhost:8000/v1"
+    openai_api_base = "http://localhost:8979/v1"
     
     with st.sidebar:
         state = st.session_state
@@ -24,7 +25,8 @@ def infer_page():
                 "top_p": 1.0,
                 "tensor_parallel_size": 1,
                 "gpu_memory_utilization": 0.9,
-                "cuda_visible_devices":"0"
+                "cuda_visible_devices":"0",
+                "max_model_length": -1,
             }
         infer_args = state["infer_args"]
         
@@ -60,7 +62,12 @@ def infer_page():
         st.text_area(label="System Prompt", key="_infer_system_prompt", on_change=save_sys_prompt)
         
         st.markdown("##### 资源分配")
-        text_input("CUDA_VISIBLE_DEVICES", data=infer_args, key="cuda_visible_devices", prefix="_infer_")
+        col_cuda_visible_devices, col_max_model_length = st.columns(2)
+        with col_cuda_visible_devices:
+            text_input("CUDA_VISIBLE_DEVICES", data=infer_args, key="cuda_visible_devices", prefix="_infer_")
+        with col_max_model_length:
+            number_input("最大模型长度", min_value=-1, max_value=4096, data=infer_args, key="max_model_length", prefix="_infer_", help="设置为-1表示不限制")
+        
         col_tensor_parallel_size, col_gpu_memory_utilization = st.columns(2)
         with col_tensor_parallel_size:
             number_input("Tensor并行大小", min_value=1, max_value=8, data=infer_args, key="tensor_parallel_size", prefix="_infer_")
@@ -88,11 +95,13 @@ def infer_page():
                     env = deepcopy(os.environ)
                     env["CUDA_VISIBLE_DEVICES"] = infer_args["cuda_visible_devices"]
                     state["infer_ckpt_full_path"] = os.path.join(ckpt_path, ckpt)
-                    cmd = "python -m vllm.entrypoints.openai.api_server --trust-remote-code --model %s --gpu-memory-utilization %s --tensor-parallel-size %s" % (
+                    cmd = "python -m vllm.entrypoints.openai.api_server --port 8979 --trust-remote-code --model %s --gpu-memory-utilization %s --tensor-parallel-size %s" % (
                         state["infer_ckpt_full_path"],
                         infer_args["gpu_memory_utilization"],
                         infer_args["tensor_parallel_size"],
                     )
+                    if infer_args["max_model_length"] != -1:
+                        cmd += " --max-model-len %s" % infer_args["max_model_length"]
                     state["vllm_instance"] = Popen(cmd, stdout=PIPE, stderr=STDOUT, env=env, shell=True, preexec_fn=os.setsid)
                     state["vllm_log"] = ""
                     st.toast("开始加载模型", icon=":material/info:")
@@ -104,11 +113,11 @@ def infer_page():
             if state.get("vllm_instance", None) is not None:
                 instance = state.get("vllm_instance")
                 if instance != None:
-                    instance.terminate()
+                    os.killpg(instance.pid, SIGINT) 
                     instance.wait()
-                    # os.killpg(instance.pid, SIGTERM) 
                     state["vllm_log"] += "terminated\n"
                     state["vllm_instance"] = None
+                    torch_gc()
                 state["client"] = None
                 st.toast("模型已卸载",icon=":material/info:")
                 print("模型已卸载")
@@ -150,7 +159,7 @@ def infer_page():
                 st.toast("模型异常终止", icon=":material/error:")
                 print("模型异常终止")
         
-        with st.expander("VLLM日志", expanded=True, icon=":material/monitoring:"):
+        with st.expander("模型推理日志", expanded=True, icon=":material/monitoring:"):
             with st.container(height=250):
                 st.text(state["vllm_log"])
     

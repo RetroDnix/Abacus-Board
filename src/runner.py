@@ -27,6 +27,7 @@ class Runner():
         self.lora_args = lora_args
 
         self.trainer = Popen(gen_cmd(train_args, freeze_args, lora_args), env=env, shell=True, preexec_fn=os.setsid)
+        self.pid = self.trainer.pid
         yield from self.monitor()
             
     def monitor(self):
