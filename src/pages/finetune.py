@@ -342,7 +342,7 @@ def finetune_page():
                 state["trainer"] = None
                 st.rerun(scope="app")
                 
-            with st.expander("Llamafactory日志", expanded=True, icon=":material/monitoring:"):
+            with st.expander("模型微调日志", expanded=True, icon=":material/monitoring:"):
                 if return_dict.get("progress", None) != None:
                     label = return_dict["progress"][0]
                     precentage = return_dict["progress"][1]

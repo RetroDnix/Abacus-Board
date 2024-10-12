@@ -4,3 +4,6 @@ data/
 outputs/
 .cache/
 .eggs/
+LLaMA-Factory/
+logs/
+opencompass/configs/eval_*

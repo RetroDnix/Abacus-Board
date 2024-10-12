@@ -111,7 +111,7 @@ def eval_page():
             # print("模型评测完成")
         else: st.info("空闲", icon=":material/info:")
         
-        with st.expander("OpenCompass日志", expanded=True, icon=":material/monitoring:"):
+        with st.expander("模型评估日志", expanded=True, icon=":material/monitoring:"):
             with st.container(height=500):
                 st.text(state["opc_log"])
         
