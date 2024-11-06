@@ -177,12 +177,12 @@ def eval_page():
             else:
                 st.toast("没有正在进行的评测任务", icon=":material/error:")
 
-        st.html(body = '''    
-            <div style="text-align: center;color: gray; font-size: 12px;">
-                本页面使用
-                <a href="https://streamlit.io/" target="_blank">Streamlit</a>
-                与
-                <a href="https://github.com/open-compass/opencompass" target="_blank">OpenCompass</a>
-                构建。
-            </div>
-        ''')
+        # st.html(body = '''    
+        #     <div style="text-align: center;color: gray; font-size: 12px;">
+        #         本页面使用
+        #         <a href="https://streamlit.io/" target="_blank">Streamlit</a>
+        #         与
+        #         <a href="https://github.com/open-compass/opencompass" target="_blank">OpenCompass</a>
+        #         构建。
+        #     </div>
+        # ''')

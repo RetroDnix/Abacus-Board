@@ -10,7 +10,7 @@ from datetime import datetime
 from signal import SIGTERM
 import os
 
-def finetune_page():
+def finetune_abacus():
     state = st.session_state
     
     if "train_args" not in state:
@@ -310,15 +310,15 @@ def finetune_page():
                 state["runner"] = None
                 st.rerun(scope="app")
         
-        st.html(body = '''    
-            <div style="text-align: center;color: gray; font-size: 12px;">
-                本页面使用
-                <a href="https://streamlit.io/" target="_blank">Streamlit</a>
-                与
-                <a href="https://github.com/hiyouga/LLaMA-Factory" target="_blank">Llamafactory</a>
-                构建。
-            </div>
-        ''')
+        # st.html(body = '''    
+        #     <div style="text-align: center;color: gray; font-size: 12px;">
+        #         本页面使用
+        #         <a href="https://streamlit.io/" target="_blank">Streamlit</a>
+        #         与
+        #         <a href="https://github.com/hiyouga/LLaMA-Factory" target="_blank">Llamafactory</a>
+        #         构建。
+        #     </div>
+        # ''')
     
     if show_cmd:
         if state["trainer"] == None and validate_args(train_args) == "":

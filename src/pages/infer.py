@@ -123,15 +123,15 @@ def infer_page():
                 print("模型已卸载")
                 st.rerun(scope="app")
         
-        st.html(body = '''    
-            <div style="text-align: center;color: gray; font-size: 12px;">
-                本页面使用
-                <a href="https://streamlit.io/" target="_blank">Streamlit</a>
-                与
-                <a href="https://github.com/vllm-project/vllm" target="_blank">VLLM</a>
-                构建。
-            </div>
-        ''')
+        # st.html(body = '''    
+        #     <div style="text-align: center;color: gray; font-size: 12px;">
+        #         本页面使用
+        #         <a href="https://streamlit.io/" target="_blank">Streamlit</a>
+        #         与
+        #         <a href="https://github.com/vllm-project/vllm" target="_blank">VLLM</a>
+        #         构建。
+        #     </div>
+        # ''')
 
     @st.fragment(run_every=2)
     def update_log():
