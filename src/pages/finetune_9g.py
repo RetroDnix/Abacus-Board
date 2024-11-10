@@ -20,14 +20,14 @@ def finetune_9g():
             #config位置，在configs/目录中
             "config":"thisConfig",
             #训练batch size
-            "batch_size":"1",
-            "dataset_dir":"./data",
+            "batch_size":1,
+            "dataset_dir":"./data-example",
             "dataset":"",
             #多久存一次
             "save":True,
-            "save_iters":"500",
+            "save_iters":500,
             #总的iteration
-            "train_iters":"10000",
+            "train_iters":10000,
             #在dataset_config/目录下，数据集的设置
             "dataset_config":"fm9g_sft",
             #dataloder 的加载线程的设置，如果配置较好，可以适量提高
@@ -37,33 +37,33 @@ def finetune_9g():
             "dataloader_num_workers":1,
             "parallel_load_datastate":"8",
             #学习率
-            "lr":"1e-2",
+            "lr":1e-2,
             #warmup的次数
-            "warmup_iters":"20",
+            "warmup_iters":20,
             #学习率下降方法
             "lr_scheduler":"Cosine",
             #drop的比例
-            "drop_iters":"0.1",
+            "drop_iters":0.1,
             #drop比例
-            "drop_begin":"-1",
-            "drop_rate":"0.5",
+            "drop_begin":-1,
+            "drop_rate":0.5,
             #是use checkpoint，建议使用
             "use_checkpoint":"0",
         }
 
     train_args = state["train_args_9g"]
     
-    # if "trainer" not in state:
-    #     state["trainer"] = None
+    if "trainer" not in state:
+        state["trainer"] = None
     
-    # if "run_every" not in state:
-    #     state["run_every"] = 2
+    if "run_every" not in state:
+        state["run_every"] = 2
     
-    # if "cached_plot" not in state:
-    #     state["cached_plot"] = None
+    if "cached_plot" not in state:
+        state["cached_plot"] = None
     
-    # if "cached_log" not in state:
-    #     state["cached_log"] = ""
+    if "cached_log" not in state:
+        state["cached_log"] = ""
         
     # if "finetune_cuda_visible_devices" not in state:
     #     state["finetune_cuda_visible_devices"] = "0"
@@ -83,7 +83,7 @@ def finetune_9g():
     with col_ds_path:
         text_input("数据集储存路径", train_args, key="dataset_dir")
     with col_ds:
-        all_datasets, message = getDS(train_args.get("dataset_dir", "./data"))
+        all_datasets, message = getDS(train_args.get("dataset_dir", "./data-example"))
         state["_dataset"] = [s for s in train_args["dataset"].split(",") if s != ""]
         def save_dataset():
             train_args["dataset"] = ",".join(state["_dataset"])
@@ -93,19 +93,10 @@ def finetune_9g():
             placeholder="未选择",
             key="_dataset",
             on_change=save_dataset,
-            prefix="_finetune_9g_"
         )
     if message != "":
         st.error(message, icon=":material/warning:")
-    
-    st.divider()
 
-    st.markdown(
-        "##### 结果输出",
-    )
-    
-    number_input("保存间隔", 0, 10000, data=train_args, key="save_iters",prefix="_finetune_9g_")
-    
     st.divider()
 
     st.markdown(
@@ -125,13 +116,17 @@ def finetune_9g():
             "训练步数", 0, 100000, data=train_args, key="train_iters", step=1, prefix="_finetune_9g_"
         )
 
-    schedulers = ["Cosine"]
-    selectbox(
-        label="学习率调度器",
-        options=schedulers,
-        data=train_args,
-        key="lr_scheduler"
-    )
+    col_scheduler, col_save_iters = st.columns(2)
+    with col_scheduler:
+        schedulers = ["Cosine"]
+        selectbox(
+            label="学习率调度器",
+            options=schedulers,
+            data=train_args,
+            key="lr_scheduler"
+        )
+    with col_save_iters:
+        number_input("保存间隔", 0, 10000, data=train_args, key="save_iters",prefix="_finetune_9g_")
 
     slider("预热步数", 0, 1000, data=train_args, key="warmup_iters", step=1)
 
@@ -150,7 +145,7 @@ def finetune_9g():
             key="_finetune_9g_cuda_visible_devices",
             on_change= save_cuda
         )
-        number_input("预处理工作线程数", 0, 128, data=train_args, key="preprocessing_num_workers")
+        number_input("预处理工作线程数", 0, 128, data=train_args, key="dataloader_num_workers")
         
         st.divider()
         
@@ -167,6 +162,7 @@ def finetune_9g():
             else:
                 msg = validate_args_9g(train_args)
                 if msg != "":
+                    print(msg)
                     st.error(msg, icon=":material/warning:")
         
         if start_training:
@@ -205,6 +201,7 @@ def finetune_9g():
     
     if show_cmd:
         if state["trainer"] == None and validate_args_9g(train_args) == "":
+            print("ww")
             st.markdown("```bash\n{}\n```".format(gen_cmd_9g(train_args)))
     
     @st.fragment(run_every=state["run_every"])

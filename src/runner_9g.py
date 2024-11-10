@@ -101,20 +101,20 @@ def gen_cmd_9g(train_args):
 
     if args["local"] == "True":
         current_dir = os.getcwd()
-        OPTS.append(f"--dataset /home/guanjiannan/code/BMTrainer/datasets/{args['dataset_config']}.json")
+        OPTS.append(f"--dataset ./datasets/{args['dataset_config']}.json")
     else:
         current_dir = os.getcwd()
-        OPTS.append(f"--dataset /home/guanjiannan/code/BMTrainer/datasets/{args['dataset_config']}.json")
+        OPTS.append(f"--dataset ./datasets/{args['dataset_config']}.json")
         print(f"Platform config: {os.getenv('PLATFORM_CONFIG_PATH')}")
 
-    OPTS = " ".join(OPTS)
+    OPTS = "\n    ".join(OPTS)
 
     GPUS_PER_NODE = 8
     NNODES = 1
     RANK = 0
     MASTER_ENDPOINT = "localhost"
     MASTER_PORT = 9001
-    CMD = f"torchrun --nnodes={NNODES} --nproc_per_node={GPUS_PER_NODE} --node_rank={RANK} --rdzv_id=1 --rdzv_backend=c10d --rdzv_endpoint={MASTER_ENDPOINT}:{MASTER_PORT} {os.getenv('PRETRAIN_ENTRY')} {OPTS}"
+    CMD = f"torchrun\n    --nnodes={NNODES}\n    --nproc_per_node={GPUS_PER_NODE}\n    --node_rank={RANK}\n    --rdzv_id=1\n    --rdzv_backend=c10d\n    --rdzv_endpoint={MASTER_ENDPOINT}:{MASTER_PORT}\n    {os.getenv('PRETRAIN_ENTRY')} {OPTS}"
     return CMD
 
 def validate_args_9g(train_args: Dict[str, Any]) -> str:
@@ -122,7 +122,5 @@ def validate_args_9g(train_args: Dict[str, Any]) -> str:
         return "请选择模型检查点"
     if(train_args["dataset"] == ""):
         return "请选择数据集"
-    if(train_args["output_dir"] == ""):
-        return "请选择输出路径"
     return ""
     
