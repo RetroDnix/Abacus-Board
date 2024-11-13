@@ -54,14 +54,14 @@ def train_9g(
         "dataset_name": train_args["dataset"],
         "task_name": train_args["dataset"],
         "abs_weight": 1.0,
-        "path": get_absolutely_path(os.path.join(train_args["dataset_dir"], train_args["dataset"])),
+        "path": get_absolutely_path(transformed_ds_dir),
         "transforms": "0124_hq_data/general/script_cpmc.py",
         "allow_repeat": True,
         "nlines": meta["nlines"],
         "ave_tokens_per_line": meta["avg_token_per_line"],
         "total_tokens": meta["avg_token_per_line"] * meta["nlines"] / 1e9,
     }
-    json.dump(dataset_config, open(dataset_config_dir, "w"), ensure_ascii=False, indent=4)
+    json.dump([dataset_config, ], open(dataset_config_dir, "w"), ensure_ascii=False, indent=4)
 
     real_train_args = {
         "model_unique": NAME,
