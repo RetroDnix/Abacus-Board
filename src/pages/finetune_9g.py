@@ -6,12 +6,11 @@ from src.utils.mem_gc import torch_gc, abort_process
 from src.runner_9g import train_9g, validate_args_9g
 
 from datetime import datetime
-from signal import SIGTERM
-import os
-from copy import deepcopy
-from subprocess import Popen
+import os, select
+from signal import SIGINT
 
 TRAINER = "trainer_9g"
+LOG = "log_9g"
 
 def finetune_9g():
     state = st.session_state
@@ -74,7 +73,7 @@ def finetune_9g():
         state["cached_log"] = ""
 
     st.markdown("##### 训练名称")
-    model_unique = text_input(
+    text_input(
         "本次训练的唯一标识,训练的名称，模型和log等信息会存储在该文件夹中",
         train_args,
         key="model_unique",
@@ -204,59 +203,30 @@ def finetune_9g():
         if state.get(TRAINER, None) is not None:
             trainer = state[TRAINER]
             if st.button("停止微调", key="stop", use_container_width=True, type="primary"):
-                state[TRAINER] = None
                 abort_process(trainer.pid)
                 torch_gc()
+                state[TRAINER] = None
                 st.rerun(scope="app")
-        
-        # st.html(body = '''    
-        #     <div style="text-align: center;color: gray; font-size: 12px;">
-        #         本页面使用
-        #         <a href="https://streamlit.io/" target="_blank">Streamlit</a>
-        #         与
-        #         <a href="https://github.com/hiyouga/LLaMA-Factory" target="_blank">Llamafactory</a>
-        #         构建。
-        #     </div>
-        # ''')
-
     
-    # @st.fragment(run_every=state["run_every"])
-    # def show_train_state():
-    #     state = st.session_state
-    #     trainer = state.get(TRAINER, None)
+    @st.fragment(run_every=2)
+    def update_log():
+        if state.get(TRAINER, None) is not None:
+            instance = state[TRAINER]
+            if instance.poll() == None:
+                output = instance.stdout
+                readable, _, _ = select.select([output], [], [], 0.1)
+                while output in readable:
+                    line = output.readline().decode('utf-8')
+                    state[LOG] += line
+                    readable, _, _ = select.select([output], [], [], 0.1)
+            else: 
+                state[TRAINER] = None
+                state[LOG] += "terminated\n"
+                st.toast("微调结束")
+                print("微调结束")
         
-    #     if trainer is not None:
-    #         st.info("模型微调正在运行中...", icon=":material/info:")
-    #         return_dict = next(trainer)
-    #         new_plot = return_dict.get("loss_viewer", None)
-    #         new_log = return_dict.get("output", "")
-    #         state["cached_plot"] = state["cached_plot"] if new_plot == None else new_plot
-    #         state["cached_log"] = state["cached_log"] if new_log == "" else new_log
-            
-    #         if return_dict.get("end", False):
-    #             state[TRAINER] = None
-    #             st.rerun(scope="app")
-                
-    #         with st.expander("模型微调日志", expanded=True, icon=":material/monitoring:"):
-    #             if return_dict.get("progress", None) != None:
-    #                 label = return_dict["progress"][0]
-    #                 precentage = return_dict["progress"][1]
-    #                 st.progress(precentage / 100, label)
-                    
-    #             if state["cached_plot"] != None:
-    #                 st.pyplot(state["cached_plot"])
-                
-    #             with st.container(height=500):
-    #                 st.text(state["cached_log"])
-        
-        
-    # if state.get("trainer", None) is not None:
-    #     show_train_state()
-    # else:
-    #     if state["cached_plot"] != None:
-    #         st.success("模型微调完成", icon=":material/check:")
-    #     else: 
-    #         st.info("空闲", icon=":material/info:")
-    #     with st.expander("模型微调日志", expanded=True, icon=":material/monitoring:"):            
-    #         with st.container(height=500):
-    #             st.text(state["cached_log"])
+        with st.expander("模型微调日志", expanded=True, icon=":material/monitoring:"):
+            with st.container(height=250):
+                st.text(state[LOG])
+    
+    update_log()
