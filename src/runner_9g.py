@@ -88,7 +88,6 @@ def train_9g(
     json.dump({"pretrain":real_train_args}, open(train_config_dir, "w"), ensure_ascii=False, indent=4)
     env = deepcopy(os.environ)
     env["CUDA_VISIBLE_DEVICES"] = train_args["cuda_visible_devices"]
-    print(os.listdir(WORK_DIR))
     return Popen(["./pretrain_dragonfly.sh", NAME, str(train_args["n_gpus"])], cwd=WORK_DIR, env=env, stdout=PIPE, stderr=STDOUT, shell=True, preexec_fn=os.setsid)
 """
 model_unique

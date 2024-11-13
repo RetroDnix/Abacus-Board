@@ -60,8 +60,8 @@ def finetune_9g():
 
     train_args = state["train_args_9g"]
     
-    if "trainer" not in state:
-        state["trainer"] = None
+    if TRAINER not in state:
+        state[TRAINER] = None
     
     if "run_every" not in state:
         state["run_every"] = 2
@@ -71,6 +71,9 @@ def finetune_9g():
     
     if "cached_log" not in state:
         state["cached_log"] = ""
+    
+    if LOG not in state:
+        state[LOG] = ""
 
     st.markdown("##### 训练名称")
     text_input(
