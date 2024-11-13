@@ -12,3 +12,9 @@ def getDS(ds_path:str)->Tuple[List,str]:
         return json.load(open(ds_path)).keys(),""
     else: 
         return [],"未找到dataset_info.json文件"
+
+def getDS_9g(ds_path:str)->Tuple[List,str]:
+    if os.path.exists(ds_path):
+        return sorted([dir for dir in os.listdir(ds_path) if os.path.isdir(os.path.join(ds_path, dir))]),""
+    else: 
+        return [],"未找到数据集文件夹"

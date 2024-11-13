@@ -104,7 +104,7 @@ def toggle(
         disabled=disabled,
         label_visibility=label_visibility,
         on_change=store_value,
-        args=[key,data, prefix]
+        args=[key, data, prefix]
     )
 
 def selectbox(
