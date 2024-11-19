@@ -5,12 +5,15 @@ from src.widgets.stated_widgets import number_input, text_input, slider, toggle,
 from src.utils.mem_gc import torch_gc, abort_process
 from src.runner_9g import train_9g, validate_args_9g
 
+from matplotlib import pyplot as plt
+
 from datetime import datetime
 import os, select
 from signal import SIGINT
 
 TRAINER = "trainer_9g"
 LOG = "log_9g"
+PLOT = "plot_9g"
 
 def finetune_9g():
     state = st.session_state
@@ -54,7 +57,6 @@ def finetune_9g():
             "drop_rate":0.5,
             #是否use checkpoint，建议使用
             "use_checkpoint":"1",
-            "n_gpus":1,
             "cuda_visible_devices":"0",
         }
 
@@ -66,8 +68,8 @@ def finetune_9g():
     if "run_every" not in state:
         state["run_every"] = 2
     
-    if "cached_plot" not in state:
-        state["cached_plot"] = None
+    if PLOT not in state:
+        state[PLOT] = ([], [])
     
     if "cached_log" not in state:
         state["cached_log"] = ""
@@ -165,23 +167,13 @@ def finetune_9g():
         
         st.markdown("##### 资源分配")
         
-        col_cuda_visible_devices, col_n_gpus = st.columns(2)
-        with col_cuda_visible_devices:
-            text_input(
-                "CUDA_VISIBLE_DEVICES", 
-                data = train_args,
-                key="cuda_visible_devices",
-                prefix="_finetune_9g_",
-            )
-        with col_n_gpus:
-            number_input(
-                label="GPU数量",
-                data=train_args,
-                key="n_gpus",
-                min_value=1,
-                max_value=8,
-                prefix="_finetune_9g_",
-            )
+        text_input(
+            "CUDA_VISIBLE_DEVICES", 
+            data = train_args,
+            key="cuda_visible_devices",
+            prefix="_finetune_9g_",
+        )
+        
         number_input("预处理工作线程数", 0, 128, data=train_args, key="dataloader_num_workers")
         
         st.divider()
@@ -194,10 +186,12 @@ def finetune_9g():
             elif validate_args_9g(train_args) != "":
                 st.error(validate_args_9g(train_args), icon=":material/warning:")
             else:
+                torch_gc()
                 trainer = train_9g(train_args, model_variant)
                 if(trainer == None):
                     st.error("模型微调出错")
                 else:
+                    state[PLOT] = ([], [])
                     state[TRAINER] = trainer
                     st.toast("开始模型微调", icon=":material/info:")
                     print("开始模型微调")
@@ -221,6 +215,11 @@ def finetune_9g():
                 while output in readable:
                     line = output.readline().decode('utf-8')
                     state[LOG] += line
+                    if line.startswith("|"):
+                        params = {p.split(":")[0].strip() : p.split(":")[1].strip() for p in line.split("|") if p.find(":") != -1}
+                        print(params)
+                        state[PLOT][0].append(int(params["Iter"]))
+                        state[PLOT][1].append(float(params["loss"]))
                     readable, _, _ = select.select([output], [], [], 0.1)
             else: 
                 state[TRAINER] = None
@@ -229,7 +228,13 @@ def finetune_9g():
                 print("微调结束")
         
         with st.expander("模型微调日志", expanded=True, icon=":material/monitoring:"):
-            with st.container(height=250):
+            if len(state[PLOT][0]) > 0:
+                fig = plt.figure(figsize=(10, 5), dpi=100)
+                plt.plot(state[PLOT][0], state[PLOT][1])
+                plt.xlabel("Iteration")
+                plt.ylabel("Loss")
+                st.pyplot(fig)
+            with st.container(height=400):
                 st.text(state[LOG])
     
     update_log()

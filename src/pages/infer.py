@@ -13,8 +13,12 @@ def infer_page():
     openai_api_key = "EMPTY"
     openai_api_base = "http://localhost:8979/v1"
     
+    model_variants = ["Abacus", "FM_9G_2B", "FM_9G_8B"]
+    
     with st.sidebar:
         state = st.session_state
+        
+        model_variant = st.selectbox("模型类型", model_variants, index=1)
         
         ckpt_path, ckpt = top_page("infer_ckpt_parm")
         
@@ -102,6 +106,7 @@ def infer_page():
                     )
                     if infer_args["max_model_length"] != -1:
                         cmd += " --max-model-len %s" % infer_args["max_model_length"]
+                    cmd += " --tokenizer_mode=%s" % ("cpm"if model_variant == "FM_9G_8B" else "auto")
                     state["vllm_instance"] = Popen(cmd, stdout=PIPE, stderr=STDOUT, env=env, shell=True, preexec_fn=os.setsid)
                     state["vllm_log"] = ""
                     st.toast("开始加载模型", icon=":material/info:")

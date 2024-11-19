@@ -85,7 +85,7 @@ def finetune_abacus():
     st.caption("选择微调时使用的训练方式与微调方法")
     col_finetuning_type, col_stage = st.columns(2)
     with col_finetuning_type:
-        finetune_methods = ["full", "freeze", "LoRA"]
+        finetune_methods = ["full", "freeze", "lora"]
         selectbox(
             label = "训练方式", 
             options = finetune_methods,
@@ -288,6 +288,7 @@ def finetune_abacus():
             elif validate_args(train_args) != "":
                 st.error(validate_args(train_args), icon=":material/warning:")
             else:
+                torch_gc()
                 runner = Runner()
                 trainer = runner.launch(train_args, freeze_args, lora_args, state["finetune_cuda_visible_devices"])
                 if trainer != None:

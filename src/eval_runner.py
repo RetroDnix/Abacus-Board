@@ -37,7 +37,7 @@ models = [
         type=VLLM,
         abbr="%s",
         path="%s",
-        model_kwargs=dict(gpu_memory_utilization=0.9,tensor_parallel_size=%s),
+        model_kwargs=dict(gpu_memory_utilization=0.9,tensor_parallel_size=%s,tokenizer_mode="%s"),
         meta_template=_meta_template,
         max_out_len=%s,
         max_seq_len=%s,
@@ -57,7 +57,7 @@ summarizer = dict(
 
 """
 import os
-def start_eval(eval_args):
+def start_eval(eval_args, model_variant):
     filename = "opencompass/configs/eval_%s.py"%eval_args["real_abbr"]
     options = eval_args["dataset"]
     
@@ -89,11 +89,14 @@ def start_eval(eval_args):
         if option in summerizer_dict:
             summerizer_str += "summerize_groups += %s\n"%summerizer_dict[option]
     
+    tokenizer_mode = "cpm" if model_variant == "FM_9G_8B" else "auto"
+    
     config = template%(
         dataset_str,
         eval_args["real_abbr"],
         os.path.abspath(eval_args["ckpt_full_path"]),
         eval_args["num_gpus"],
+        tokenizer_mode,
         eval_args["max_out_len"],
         eval_args["max_seq_len"],
         eval_args["batch_size"],
