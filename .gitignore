@@ -1,9 +1,11 @@
 __pycache__
 saves/
-data/
+data-example/
+dataset_bin/
 outputs/
 .cache/
 .eggs/
-LLaMA-Factory/
 logs/
 opencompass/configs/eval_*
+opencompass.egg-info/
+temp/

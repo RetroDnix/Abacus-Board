@@ -1,10 +1,12 @@
 # 一、简介
 
-为了方便二次开发与应用，我们基于一批优秀开源项目开发了适用于“珠算”代码大模型的微调适配平台，可以通过零代码的方式实现模型的微调、评测与推理功能。
+为了方便二次开发与应用，我们基于一批优秀开源项目开发了适用于“珠算”代码大模型与“九格”大模型的微调适配平台，可以通过零代码的方式实现模型的微调、评测与推理功能。
 
 ## 相关链接
 
 珠算大模型：https://github.com/HIT-SCIR/Abacus
+
+九格大模型：
 
 微调适配平台：https://github.com/RetroDnix/Abacus-Board
 
@@ -21,34 +23,35 @@
 | LLamafactory | 0.9.0 | 用于模型微调 |
 | accelerate | 0.34.2 | 用于加速模型训练 |
 | OpenCompass | 0.2.3 | 用于模型评估 |
-| VLLM | 0.4.3 | 用于模型推理 |
+| VLLM | 0.5.0 | 用于模型推理 |
 | Streamlit | latest | 用于生成UI界面 |
 
 由于上述库之间依赖关系较难处理、且部分库配置比较麻烦。为了简化使用过程，我们推荐直接使用通过Docker镜像使用微调适配平台。同时，我们给出构建Docker镜像使用的dockerfile以及相关数据文件，你也可以选择自行配置环境。
 
 ## 1、通过Docker使用
 
-我们提供的Docker镜像基于NVIDIA的cuda镜像构建。对应的版本为cuda12.4.1、ubuntu22.04。在开始之前，请确保你已经安装了Docker与NVIDIA-Container-Toolkit。
+我们提供的Docker镜像基于NVIDIA的cuda镜像构建。对应的版本为cuda12.2.2、ubuntu22.04。在开始之前，请确保你已经安装了Docker与NVIDIA-Container-Toolkit。
 
 
 ### 拉取微调适配平台镜像与示例数据集
-docker pull retrodnix/abacus-board:v1.3
+docker pull retrodnix/abacus-board:v1.42
 
-```
+```bash
 # 拉取源码、dockerfile、示例数据集等，非必须
 git clone https://github.com/RetroDnix/Abacus-Board
 ```
 
 ### 运行镜像
 
-```
+```bash
+cd Abacus-Board
 docker run \
     --gpus all \
     --network host \
     -it \
     -v ./saves:/workspace/Abacus-Board/saves \
-    -v ./data-example:/workspace/Abacus-Board/data \
-    retrodnix/abacus-board:v1.3 
+    -v ./data-example:/workspace/Abacus-Board/data-example \
+    retrodnix/abacus-board:v1.42
 ```
 
 参数说明：
@@ -65,15 +68,15 @@ docker run \
 
 ### 拉取相关文件
 
-```
+```bash
 git clone https://github.com/RetroDnix/Abacus-Board
 ```
 
 ### 运行构建
 
-在这一步开始前，你需要安装Docker与NVIDIA-Container-Toolkit，并且根据需要修改dockerfile。比如将第一行的FROM语句改为你想使用的CUDA镜像。之后，使用以下命令开始构建：
+在这一步开始前，你需要安装Docker与NVIDIA-Container-Toolkit，并且根据需要修改dockerfile。之后，使用以下命令开始构建：
 
-```
+```bash
 cd Abacus-Board
 docker build -t abacus-board:v2 .
 ```
