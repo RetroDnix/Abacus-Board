@@ -28,7 +28,7 @@ RUN rm -r /temp && \
     pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 
 # 安装微调平台
-RUN git clone https://github.com/RetroDnix/Abacus-Board Abacus-Board
+RUN git clone https://github.com/RetroDnix/Abacus-Board Abacus-Board && git checkout develop
 
 WORKDIR /workspace/Abacus-Board
 

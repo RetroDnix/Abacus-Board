@@ -100,13 +100,13 @@ def infer_page():
                     env["CUDA_VISIBLE_DEVICES"] = infer_args["cuda_visible_devices"]
                     state["infer_ckpt_full_path"] = os.path.join(ckpt_path, ckpt)
                     cmd = "python -m vllm.entrypoints.openai.api_server --port 8979 --trust-remote-code --model %s --gpu-memory-utilization %s --tensor-parallel-size %s" % (
-                        state["infer_ckpt_full_path"],
+                        os.path.abspath(state["infer_ckpt_full_path"]) + "/",
                         infer_args["gpu_memory_utilization"],
                         infer_args["tensor_parallel_size"],
                     )
                     if infer_args["max_model_length"] != -1:
                         cmd += " --max-model-len %s" % infer_args["max_model_length"]
-                    cmd += " --tokenizer_mode=%s" % ("cpm"if model_variant == "FM_9G_8B" else "auto")
+                    cmd += " --tokenizer-mode=%s" % ("cpm"if model_variant == "FM_9G_8B" else "auto")
                     state["vllm_instance"] = Popen(cmd, stdout=PIPE, stderr=STDOUT, env=env, shell=True, preexec_fn=os.setsid)
                     state["vllm_log"] = ""
                     st.toast("开始加载模型", icon=":material/info:")

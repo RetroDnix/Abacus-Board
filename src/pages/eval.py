@@ -43,7 +43,7 @@ def eval_page():
     
     all_datasets = ["HumanEval", "HumanEval+", "MBPP[sanitized]","MBPP+", "MMLU", "HellaSwag", "ARC-e", "BBH", "C-Eval", "CMMLU", "GSM8K"]
     
-    model_variants = ["Abacus", "FM_9G_2B", "FM_9G_8B"]
+    model_variants = ["Abacus", "FM_9G_2B"]
     
     st.markdown("##### 测评设置")
     

@@ -28,7 +28,8 @@ RUN rm -r /temp && \
     pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 
 # 安装微调平台
-RUN git clone https://github.com/RetroDnix/Abacus-Board Abacus-Board
+# RUN git clone https://github.com/RetroDnix/Abacus-Board Abacus-Board && git checkout develop
+COPY ../Abacus-Board /workspace/Abacus-Board
 
 WORKDIR /workspace/Abacus-Board
 
@@ -69,7 +70,5 @@ RUN cd human-eval && \
 RUN mkdir -p ~/.cache/evalplus && \
     cp EvalPlusData/HumanEvalPlus-v0.1.9.jsonl ~/.cache/evalplus && \
     cp EvalPlusData/MbppPlus-v0.1.0.jsonl ~/.cache/EvalPlusData
-
-RUN git pull && git checkout develop
 
 CMD ["streamlit","run","main.py","--server.port=8888","--server.address=127.0.0.1"]
