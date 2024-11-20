@@ -4,22 +4,22 @@
 
 declare -A args  # Declare an associative array to store arguments and values
 
-args["model_unique"]="8b_0702"
-args["resume_ckpt"]=""
+args["model_unique"]="8b_0701"
 args["config"]="8b"
 args["flash"]="cuda"
 args["batch_size"]="1"
 args["max_length"]="4096"
 args["save_iters"]="500"
 args["train_iters"]="10"
-args["dataset_config"]="fm9g_sft"
-args["local"]="False"
+args["dataset_config"]="datasets_info"
+args["local"]="True"
 args["dataloader"]="indexed"
 args["save"]="True"
+args["save_path"]="./data/checkpoints"
 args["dataloader_num_threads"]=1
-args["dataloader_prefetch"]=2
-args["dataloader_prefetch_factor"]=32
-args["dataloader_num_workers"]=2
+args["dataloader_prefetch"]=1
+args["dataloader_prefetch_factor"]=1
+args["dataloader_num_workers"]=1
 args["lr"]="1e-5"
 args["warmup_iters"]="20"
 args["drop_iters"]="0.1"
@@ -38,13 +38,13 @@ args["only_load_model"]="1"
 args["lr_scheduler"]="cosine"
 args["resume_no_optimze"]="0"
 args["tp_size"]="1"
-args["parallel_load_datastate"]="16"
+args["parallel_load_datastate"]="8"
 args["async_save"]="False"
 args["load_dataloader_ckpt"]="0"
 args["drop_begin"]="-1"
 args["drop_rate"]="0.5"
 args["use_checkpoint"]="1"
-
+args["load"]=""
 
 # Loop through the arguments
 for ((i=1; i<=$#; i++)); do
@@ -66,9 +66,7 @@ done
 # 使用 Python 读取 JSON 文件并更新 Bash 字典
 while read -r key value; do
   args["$key"]="$value"
-done < <(python -c 'import json, sys; obj = json.load(open("train_configs/'${args['config']}'.json"))["pretrain"]; print("\n".join(["{} {}".format(k, v) for k, v in obj.items()]))')
-
-
+done < <(python -c 'import json, sys; obj = json.load(open("train_configs/'$1'.json"))["pretrain"]; print("\n".join(["{} {}".format(k, v) for k, v in obj.items()]))')
 
 # 用cmd arg 再更新一次
 # Loop through the arguments
@@ -90,11 +88,11 @@ for ((i=1; i<=$#; i++)); do
 done
 
 # Print the values of the arguments
-echo "----------- CMD args ----------"
-for key in "${!args[@]}"; do
-    echo "$key: ${args[$key]}"
-done
-echo "--------- END CMD args --------"
+# echo "----------- CMD args ----------"
+# for key in "${!args[@]}"; do
+#     echo "$key: ${args[$key]}"
+# done
+# echo "--------- END CMD args --------"
 
 
 if [[ ${args["flash"]} == "triton" ]]; then
@@ -103,24 +101,8 @@ if [[ ${args["flash"]} == "triton" ]]; then
     echo "triton flash"
 fi
 
-
-
-
-
-
-GPUS_PER_NODE=$(nvidia-smi --query-gpu=gpu_name --format=csv,noheader | wc -l)
-# GPUS_PER_NODE=1
-echo "Using ${GPUS_PER_NODE} GPU each machine"
-
-
-if [[ ${args["model_unique"]} == "" ]]; then
-    MODEL_UNIQUE=${JEEVES_JOB_ID}  # 写入的位置，没传的话自动构造
-    # JOBID+CreateTime, 本次run的唯一标识符。在白箱里可以通过/projects/${PROJECTID}-${PROJECTNAME}/checkpoints/${MODEL_UNIQUE} 拿到 checkpoint
-#                                               通过/projects/${PROJECTID}-${PROJECTNAME}/tensorboard/${MODEL_UNIQUE} 拿到 tensorboard
-else
-    MODEL_UNIQUE=${args["model_unique"]} # 给了写入的位置
-fi
-echo "model_unique: "$MODEL_UNIQUE
+MODEL_UNIQUE=${args["model_unique"]}
+echo "训练名: $MODEL_UNIQUE"
 
 # --------------- 运行参数 ---------------
 
@@ -136,7 +118,7 @@ OPTS+=" --warmup-iters ${args["warmup_iters"]}"
 OPTS+=" --drop-iters ${args["drop_iters"]}"
 OPTS+=" --lr_scheduler ${args["lr_scheduler"]}"
 OPTS+=" --offload"
-OPTS+=" --vocab ./tokenizer/vocab.txt"
+#OPTS+=" --vocab ./tokenizer/vocab.txt"
 OPTS+=" --flash ${args["flash"]}"
 OPTS+=" --tensorboard_all_tasks ${args["tensorboard_all_tasks"]}"
 OPTS+=" --ignore_cuda_oom ${args["ignore_cuda_oom"]}"
@@ -175,55 +157,31 @@ fi
 
 
 # --------------- 写文件路径 ---------------
-## checkpoint
-if [[ ${args["save"]} == "True" ]]; then
-  
-    OPTS+=" --save ./data/checkpoints/${MODEL_UNIQUE}/"
-    OPTS+=" --save-model ./not_exist/${MODEL_UNIQUE}/"
-else
-    echo "won't save model"
-fi
-
+## 保存路径 
+OPTS+=" --save ${args["save_path"]}/ckpt"
+OPTS+=" --save-model ${args["save_path"]}/model"
 
 ## logs，/local/logs 等价于 ./datalogs（软链）
 mkdir -p ./data/checkpoints/logs/${MODEL_UNIQUE}
 OPTS+=" --log-dir ./data/checkpoints/logs/${MODEL_UNIQUE}"
 OPTS+=" --tensorboard ./data/tensorboard/${args["exp_group"]}${MODEL_UNIQUE}/"
 
-
-
-if [[ ${args["local"]} == "True" ]]; then
-    current_dir=$(pwd)
-    OPTS+=" --dataset ${current_dir}/dataset_configs/${args["dataset_config"]}.json"
-else
-    current_dir=$(pwd)
-    OPTS+=" --dataset ${current_dir}/dataset_configs/${args["dataset_config"]}.json"
-    echo "Platform config:"${PLATFORM_CONFIG_PATH}
-fi
-
+## 数据集路径
+OPTS+=" --dataset ${args["dataset_config"]}"
 
 ## checkpoint，兼容 CHECKPOINT 和 LATEST_CHECKPOINT。debug 时建议不加载 checkpoint，启动会比较快
-if [ "${args["resume_ckpt"]}" != "" ]; then
-  OPTS+=" --load ./data/checkpoints/${MODEL_UNIQUE}/${args["resume_ckpt"]}"
-else
-  echo "No checkpoint to load"
-fi
+## 检查点路径
+OPTS+=" --load ${args["load"]}"
 
 
 filename="pretrain_dragonfly"
+PRETRAIN_ENTRY="$filename.py"
 
-if [[ ${args["local"]} == "True" ]]; then
-    PRETRAIN_ENTRY="$filename.py"
-else
-    PRETRAIN_ENTRY="$filename.py"
-fi
-
-
-GPUS_PER_NODE=8
+GPUS_PER_NODE=$2
 NNODES=1
 RANK=0
-MASTER_ENDPOINT=g3006
-MASTER_PORT=12345
+MASTER_ENDPOINT=localhost
+MASTER_PORT=5012
 #CMD="torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS_PER_NODE} --node_rank=${RANK} --master_addr=${MASTER_ENDPOINT} --master_port=${MASTER_PORT} ${PRETRAIN_ENTRY} ${OPTS}"
 CMD="torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS_PER_NODE} --node_rank=${RANK}  --rdzv_id=1 --rdzv_backend=c10d --rdzv_endpoint=${MASTER_ENDPOINT}:${MASTER_PORT} ${PRETRAIN_ENTRY} ${OPTS}"
 
