@@ -30,7 +30,7 @@ def finetune_abacus():
             "logging_steps":50,
             "save_steps":500,
             "warmup_ratio":0.00,
-            "val_size":0.05,
+            "val_size":0.00,
             "per_device_eval_batch_size":4,
             "eval_steps":100,
             "do_train":True,
@@ -40,7 +40,7 @@ def finetune_abacus():
             "packing":False,
             "plot_loss":True,
             "include_num_input_tokens_seen":True,
-            "preprocessing_num_workers":8,
+            "preprocessing_num_workers":1,
             "eval_on_start":False,
             "do_eval":False
         }
@@ -85,7 +85,7 @@ def finetune_abacus():
     st.caption("选择微调时使用的训练方式与微调方法")
     col_finetuning_type, col_stage = st.columns(2)
     with col_finetuning_type:
-        finetune_methods = ["full", "freeze", "lora"]
+        finetune_methods = ["full", "freeze", "lora", "lora_drop"]
         selectbox(
             label = "训练方式", 
             options = finetune_methods,
@@ -268,19 +268,19 @@ def finetune_abacus():
         
         st.divider()
         
-        col_show_instruction, col_start_training = st.columns(2)
-        with col_show_instruction:
-            show_cmd = st.button("预览命令", use_container_width=True)
-        with col_start_training:
-            start_training = st.button("开始微调", use_container_width=True)
+        # col_show_instruction, col_start_training = st.columns(2)
+        # with col_show_instruction:
+        #     show_cmd = st.button("预览命令", use_container_width=True)
+        # with col_start_training:
+        start_training = st.button("开始微调", use_container_width=True)
         
-        if show_cmd:
-            if state.get("trainer", None) is not None:
-                st.error("请等待当前训练完成再继续操作。", icon=":material/warning:")
-            else:
-                msg = validate_args(train_args)
-                if msg != "":
-                    st.error(msg, icon=":material/warning:")
+        # if show_cmd:
+        #     if state.get("trainer", None) is not None:
+        #         st.error("请等待当前训练完成再继续操作。", icon=":material/warning:")
+        #     else:
+        #         msg = validate_args(train_args)
+        #         if msg != "":
+        #             st.error(msg, icon=":material/warning:")
         
         if start_training:
             if state.get("trainer", None) is not None:
@@ -321,9 +321,9 @@ def finetune_abacus():
         #     </div>
         # ''')
     
-    if show_cmd:
-        if state["trainer"] == None and validate_args(train_args) == "":
-            st.markdown("```bash\n{}\n```".format(gen_cmd(train_args,freeze_args,lora_args)))
+    # if show_cmd:
+    #     if state["trainer"] == None and validate_args(train_args) == "":
+    #         st.markdown("```bash\n{}\n```".format(gen_cmd(train_args,freeze_args,lora_args)))
     
     @st.fragment(run_every=state["run_every"])
     def show_train_state():

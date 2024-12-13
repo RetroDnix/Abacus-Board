@@ -6,8 +6,6 @@
 
 珠算大模型：https://github.com/HIT-SCIR/Abacus
 
-九格大模型：
-
 微调适配平台：https://github.com/RetroDnix/Abacus-Board
 
 如果你遇到了Bug，可以在[微调适配平台的代码仓库](https://github.com/RetroDnix/Abacus-Board)中向我们提出issue。
@@ -23,7 +21,7 @@
 | LLamafactory | 0.9.0 | 用于模型微调 |
 | accelerate | 0.34.2 | 用于加速模型训练 |
 | OpenCompass | 0.2.3 | 用于模型评估 |
-| VLLM | 0.5.0 | 用于模型推理 |
+| VLLM | 0.4.3 | 用于模型推理 |
 | Streamlit | latest | 用于生成UI界面 |
 
 由于上述库之间依赖关系较难处理、且部分库配置比较麻烦。为了简化使用过程，我们推荐直接使用通过Docker镜像使用微调适配平台。同时，我们给出构建Docker镜像使用的dockerfile以及相关数据文件，你也可以选择自行配置环境。

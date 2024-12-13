@@ -180,7 +180,7 @@ PRETRAIN_ENTRY="$filename.py"
 NNODES=1
 RANK=0
 MASTER_ENDPOINT=localhost
-MASTER_PORT=55511
+MASTER_PORT=55513
 #CMD="torchrun --nnodes=${NNODES} --nproc_per_node=${GPUS_PER_NODE} --node_rank=${RANK} --master_addr=${MASTER_ENDPOINT} --master_port=${MASTER_PORT} ${PRETRAIN_ENTRY} ${OPTS}"
 CMD="torchrun --nnodes=${NNODES} --nproc_per_node=auto --node_rank=${RANK}  --rdzv_id=1 --rdzv_backend=c10d --rdzv_endpoint=${MASTER_ENDPOINT}:${MASTER_PORT} ${PRETRAIN_ENTRY} ${OPTS}"
 

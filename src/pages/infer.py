@@ -13,12 +13,12 @@ def infer_page():
     openai_api_key = "EMPTY"
     openai_api_base = "http://localhost:8979/v1"
     
-    model_variants = ["Abacus", "FM_9G_2B", "FM_9G_8B"]
+    # model_variants = ["Abacus", "FM_9G_2B", "FM_9G_8B"]
     
     with st.sidebar:
         state = st.session_state
         
-        model_variant = st.selectbox("模型类型", model_variants, index=1)
+        # model_variant = st.selectbox("模型类型", model_variants, index=1)
         
         ckpt_path, ckpt = top_page("infer_ckpt_parm")
         
@@ -100,13 +100,13 @@ def infer_page():
                     env["CUDA_VISIBLE_DEVICES"] = infer_args["cuda_visible_devices"]
                     state["infer_ckpt_full_path"] = os.path.join(ckpt_path, ckpt)
                     cmd = "python -m vllm.entrypoints.openai.api_server --port 8979 --trust-remote-code --model %s --gpu-memory-utilization %s --tensor-parallel-size %s" % (
-                        os.path.abspath(state["infer_ckpt_full_path"]) + "/",
+                        os.path.abspath(state["infer_ckpt_full_path"]),
                         infer_args["gpu_memory_utilization"],
                         infer_args["tensor_parallel_size"],
                     )
                     if infer_args["max_model_length"] != -1:
                         cmd += " --max-model-len %s" % infer_args["max_model_length"]
-                    cmd += " --tokenizer-mode=%s" % ("cpm"if model_variant == "FM_9G_8B" else "auto")
+                    # cmd += " --tokenizer-mode=%s" % ("cpm"if model_variant == "FM_9G_8B" else "auto")
                     state["vllm_instance"] = Popen(cmd, stdout=PIPE, stderr=STDOUT, env=env, shell=True, preexec_fn=os.setsid)
                     state["vllm_log"] = ""
                     st.toast("开始加载模型", icon=":material/info:")
@@ -115,6 +115,7 @@ def infer_page():
                 st.error("请先卸载当前模型", icon=":material/error:")
         
         if unload_model:
+            torch_gc()
             if state.get("vllm_instance", None) is not None:
                 instance = state.get("vllm_instance")
                 if instance != None:
@@ -190,7 +191,7 @@ def infer_page():
                 if sysprompt != "":
                     cur_messages = [{"role":"system", "content": sysprompt}] + cur_messages
                 stream = client.chat.completions.create(
-                    model=state["infer_ckpt_full_path"],
+                    model=os.path.abspath(state["infer_ckpt_full_path"]),
                     messages = cur_messages,
                     stream=True,
                     temperature=infer_args["temperature"],

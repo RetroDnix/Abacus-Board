@@ -43,7 +43,7 @@ def eval_page():
     
     all_datasets = ["HumanEval", "HumanEval+", "MBPP[sanitized]","MBPP+", "MMLU", "HellaSwag", "ARC-e", "BBH", "C-Eval", "CMMLU", "GSM8K"]
     
-    model_variants = ["Abacus", "FM_9G_2B"]
+    # model_variants = ["Abacus", "FM_9G_2B", "FM_9G_8B"]
     
     st.markdown("##### 测评设置")
     
@@ -125,7 +125,7 @@ def eval_page():
             st.table(state["eval_result"])
     
     with st.sidebar:
-        model_variant = st.selectbox("模型类型", model_variants, index=1)
+        # model_variant = st.selectbox("模型类型", model_variants, index=1)
         
         ckpt_path, ckpt = top_page("eval_ckpt_parm")
         
@@ -162,7 +162,7 @@ def eval_page():
                 state["opc_log"] = ""
                 eval_args["real_abbr"] = eval_args["abbr"] + '_' + str(random.randint(1, 1000000))
                 eval_args["ckpt_full_path"] = os.path.join(ckpt_path, ckpt)
-                cmd = start_eval(eval_args, model_variant)
+                cmd = start_eval(eval_args)
                 env = deepcopy(os.environ)
                 env["CUDA_VISIBLE_DEVICES"] = eval_args["cuda_visible_devices"]
                 state["opc_instance"] = Popen(cmd, shell=True, env=env, preexec_fn=os.setsid)

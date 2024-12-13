@@ -1,5 +1,5 @@
 # CUDA基础镜像
-FROM nvidia/cuda:12.2.2-cudnn-runtime-ubuntu22.04
+FROM nvidia/cuda:12.2.2-runtime-ubuntu22.04
 
 # 安装基础包
 RUN apt update && \

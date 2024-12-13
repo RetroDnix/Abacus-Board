@@ -9,3 +9,5 @@ logs/
 opencompass/configs/eval_*
 opencompass.egg-info/
 temp/
+BMTrainer-backup/
+src-backup/
