@@ -13,7 +13,8 @@ def abort_process(pid: int) -> None:
             for child in children:
                 abort_process(child.pid)
 
-        os.kill(pid, signal.SIGABRT)
+        os.kill(pid, signal.SIGKILL)
+        # os.kill(pid, signal.SIGABRT)
     except Exception:
         pass
 

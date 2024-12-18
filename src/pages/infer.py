@@ -164,6 +164,7 @@ def infer_page():
                 state["client"] = None
                 st.toast("模型异常终止", icon=":material/error:")
                 print("模型异常终止")
+                st.rerun(scope='app')
         
         with st.expander("模型推理日志", expanded=True, icon=":material/monitoring:"):
             with st.container(height=250):
@@ -200,6 +201,8 @@ def infer_page():
                 )
                 response = st.write_stream(stream)
             st.session_state.messages.append({"role": "assistant", "content": response})
+    elif state["vllm_instance"] is not None:
+        st.warning("模型加载中，请稍等...", icon=":material/info:")
     else:
         st.info("模型未加载，当模型载入后，会在此处显示聊天窗口", icon=":material/info:")
     

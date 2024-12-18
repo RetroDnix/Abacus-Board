@@ -27,7 +27,7 @@ def finetune_abacus():
             "max_grad_norm":1.0,
             "gradient_accumulation_steps":4,
             "lr_scheduler_type":"linear",
-            "logging_steps":50,
+            "logging_steps":1,
             "save_steps":500,
             "warmup_ratio":0.00,
             "val_size":0.00,
