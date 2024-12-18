@@ -28,25 +28,22 @@ RUN rm -r /temp && \
     pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 
 # 安装微调平台
-RUN git clone https://github.com/RetroDnix/Abacus-Board Abacus-Board && git checkout develop
+COPY ./Abacus-Board /workspace/Abacus-Board
 
 WORKDIR /workspace/Abacus-Board
+
+RUN pip3 install vllm==0.4.3 --no-cache-dir
 
 RUN cd LLaMA-Factory && \
     pip3 install -e ".[torch,metrics]" torch==2.3.0 accelerate==0.34.2 --no-cache-dir
 
-RUN git clone https://github.com/thunlp/OpenDelta && \
-    cd OpenDelta && \
+RUN cd OpenDelta && \
     python setup.py install
 
 RUN pip3 install bmtrain==1.0.0 --no-cache-dir
 
-# flash-attn vllm
-# flash_attn-2.5.9.post1+cu122torch2.3cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
-# https://github.com/Dao-AILab/flash-attention/releases/download/v2.5.9.post1/flash_attn-2.5.9.post1+cu122torch2.3cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
-
-# vllm-0.5.0.dev0+cu122-cp310-cp310-linux_x86_64.whl
-# https://qy-obs-6d58.obs.cn-north-4.myhuaweicloud.com/vllm-0.5.0.dev0%2Bcu122-cp310-cp310-linux_x86_64.whl
+RUN cd LoRA && \
+    python setup.py install
 
 RUN pip3 install ./wheels/* --no-cache-dir
 
@@ -62,8 +59,7 @@ RUN cd opencompass && \
     pip3 install -e .[full,vllm] torch==2.3.0 --no-cache-dir 
 
 # 准备eval-plus
-RUN git clone --recurse-submodules https://github.com/open-compass/human-eval.git && \
-    cd human-eval && \
+RUN cd human-eval && \
     pip3 install -e . --no-cache-dir && \
     pip3 install -e evalplus --no-cache-dir 
 
@@ -72,6 +68,8 @@ RUN mkdir -p ~/.cache/evalplus && \
     cp EvalPlusData/HumanEvalPlus-v0.1.9.jsonl ~/.cache/evalplus && \
     cp EvalPlusData/MbppPlus-v0.1.0.jsonl ~/.cache/EvalPlusData
 
-RUN git pull && git checkout develop
+RUN rm /usr/local/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py
 
-CMD ["streamlit","run","main.py","--server.port=8888","--server.address=127.0.0.1"]
+COPY ./modeling_llama.py /usr/local/lib/python3.10/site-packages/transformers/models/llama/
+
+CMD ["streamlit","run","main.py","--server.port=8888"]
