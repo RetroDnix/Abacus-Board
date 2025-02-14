@@ -1,3 +1,6 @@
+![img_v3_02g2_002a3940-1920-4c4a-979c-37760a24805g](https://github.com/user-attachments/assets/ce3417d6-0813-42ea-86a3-6631bc18ad69)
+
+
 # 一、简介
 
 为了方便二次开发与应用，我们基于一批优秀开源项目开发了适用于“珠算”代码大模型的微调适配平台，可以通过零代码的方式实现模型的微调、评测与推理功能。
@@ -32,9 +35,9 @@
 
 
 ### 拉取微调适配平台镜像与示例数据集
-docker pull retrodnix/abacus-board:v1.3
 
 ```
+docker pull retrodnix/abacus-board:latest
 # 拉取源码、dockerfile、示例数据集等，非必须
 git clone https://github.com/RetroDnix/Abacus-Board
 ```
@@ -48,7 +51,7 @@ docker run \
     -it \
     -v ./saves:/workspace/Abacus-Board/saves \
     -v ./data-example:/workspace/Abacus-Board/data \
-    retrodnix/abacus-board:v1.3 
+    retrodnix/abacus-board:latest
 ```
 
 参数说明：
